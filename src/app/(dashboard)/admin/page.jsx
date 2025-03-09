@@ -223,11 +223,35 @@ const Page = () => {
                   }}>
                     Courses
                   </Typography>
-                  <IconButton color="primary">
+                  <IconButton color="primary" onClick={()=>setopen(true)}>
                     <AddCircleOutline/>
                   </IconButton>
 
-                 </Box>
+                 </Box> 
+                 <Dialog open={open} onClose={onClose} aria-label="form-dialog-title">
+                    <DialogTitle id="from-dialog-title">Add an Institue Course</DialogTitle>
+                    <DialogContent>
+                      <DialogContentText>
+                         After adding this course, this course will be one of the choices of courses avalaible  for selection in certificate generation
+                      </DialogContentText>
+                  
+                    <TextField
+                      id="address" 
+                      label="Course name" 
+                      type="name" 
+                       autoFocus  
+                       style={{width:"95%", marginLeft:"10px", marginRight:"10px", marginTop:"20px"}}
+                    />
+                    </DialogContent>
+                    <DialogActions>
+                      <Button color="primary" variant="outlined" onClick={onClose}>
+                        Cancel
+                      </Button> 
+                      <Button color="primary" variant="contained">
+                        Submit
+                      </Button>
+                    </DialogActions>
+                 </Dialog>
                  <> 
                   <Box display={'flex'} justifyContent={'center'} className={classes.courseItem} style={{marginLeft:"10px", marginRight:"10px"}}>   
                     <Typography style={{alignSelf:'center'}}> 
@@ -241,6 +265,9 @@ const Page = () => {
 
                   </Box>
                  </>
+                 <Dialog >
+
+                 </Dialog>
                  <Button
                       onClick={() =>{}}
                       fullWidth
