@@ -148,7 +148,7 @@ const NavBar = () => {
             color="primary"
             noWrap
           >
-            Certoshi
+            ...
           </Typography>
           <div className={classes.grow} />
           <div className={classes.sectionDesktop}>

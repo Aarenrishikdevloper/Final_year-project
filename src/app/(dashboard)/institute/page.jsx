@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useState } from "react";
 import {
   TextField,
@@ -17,7 +17,11 @@ import {
   IconButton,
   styled,
 } from "@mui/material";
-import { OpenInNewOutlined, FileCopyOutlined, LoopOutlined } from "@mui/icons-material";
+import {
+  OpenInNewOutlined,
+  FileCopyOutlined,
+  LoopOutlined,
+} from "@mui/icons-material";
 import { Error } from "@/components/Error";
 import SubmitAnimation from "@/components/SubmitApplication";
 import { v4 as uuidv4 } from "uuid";
@@ -47,7 +51,7 @@ const StyledTabs = styled(Tabs)({
 
 const StyledTab = styled(Tab)(({ theme }) => ({
   color: "white",
-  opacity: 0.5,
+  opacity: 1,
   fontSize: "20px",
   padding: "10px",
   "&.Mui-selected": {
@@ -57,7 +61,8 @@ const StyledTab = styled(Tab)(({ theme }) => ({
 
 const useStyles = {
   appbar: {
-    background: "linear-gradient(109.96deg,#363e98,#8ac6ff),#fff",
+    background:
+      "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
   },
   tabPanel: {
     height: "100%",
@@ -155,7 +160,12 @@ const GenerateCert = () => {
   });
 
   const handleChange = (name) => (event) => {
-    setState((prev) => ({ ...prev, [name]: event.target.value, currentState: "normal", revokeCurrentState: "normal" }));
+    setState((prev) => ({
+      ...prev,
+      [name]: event.target.value,
+      currentState: "normal",
+      revokeCurrentState: "normal",
+    }));
   };
 
   const handleTabChange = (event, newValue) => {
@@ -215,28 +225,42 @@ const GenerateCert = () => {
 
   return (
     <>
-    <NavBar/>
-      <Grid container  align="center" justifyContent={'center'}>
+      <NavBar />
+      <Grid container align="center" justifyContent={"center"}>
         <Grid item xs={8} sm={8}>
-          <Typography variant="h4" color="primary" align="center" style={{ marginTop: "30px" }}>
+          <Typography
+            variant="h4"
+            align="center"
+            sx={{
+              background:
+                "linear-gradient(124deg, rgb(13, 37, 117) 0%, rgb(21, 192, 155) 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              fontWeight: "bold",
+              marginTop: "30px",
+            }}
+          >
             Welcome, Institute
-          </Typography>
-          <Typography variant="subtitle2" color="secondary" align="center" style={{ marginTop: "30px" }}>
-            You may create or revoke a certificate below
           </Typography>
           <Paper sx={useStyles.paper}>
             <AppBar position="static" sx={useStyles.appbar}>
-              <StyledTabs value={tabValue} onChange={handleTabChange} aria-label="simple tabs example" variant="fullWidth">
+              <StyledTabs
+                value={tabValue}
+                onChange={handleTabChange}
+                aria-label="simple tabs example"
+                variant="fullWidth"
+              >
                 <StyledTab label="Generate Certificate" />
                 <StyledTab label="Revoke Certificate" />
               </StyledTabs>
             </AppBar>
             <div style={useStyles.tabPanel}>
               <TabPanel value={tabValue} index={0}>
-                <form style={{ ...useStyles.container, marginTop: "3vh" }} autoComplete="off" onSubmit={submitData}>
-                  <Grid item xs={12} sm={12}>
-                    <Typography variant="subtitle1">Input the certificate details below to generate a certificate</Typography>
-                  </Grid>
+                <form
+                  style={{ ...useStyles.container, marginTop: "3vh" }}
+                  autoComplete="off"
+                  onSubmit={submitData}
+                >
                   <Grid item xs={12} sm={12}>
                     <TextField
                       required
@@ -295,7 +319,11 @@ const GenerateCert = () => {
                     />
                   </Grid>
                   <Grid item xs={12} sm={12}>
-                    <FormControl required variant="outlined" sx={useStyles.formControl}>
+                    <FormControl
+                      required
+                      variant="outlined"
+                      sx={useStyles.formControl}
+                    >
                       <InputLabel htmlFor="course-index">Course</InputLabel>
                       <Select
                         native
@@ -312,27 +340,42 @@ const GenerateCert = () => {
                     </FormControl>
                   </Grid>
                   <Grid item xs={12} sm={12} justifyContent>
-                    <Box display="flex" justifyContent="center" alignItems="center">
-                      <SubmitAnimation  currentState={currentState} className={useStyles.submitBtn}/> 
-                      {currentState === "validate" &&(
-                        <IconButton  
-                          style={{marginTop:"10px"}} 
-                          color="primary"  
-                          onClick={()=>{
+                    <Box
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                    >
+                      <SubmitAnimation
+                        currentState={currentState}
+                        className={useStyles.submitBtn}
+                      />
+                      {currentState === "validate" && (
+                        <IconButton
+                          style={{ marginTop: "10px" }}
+                          color="primary"
+                          onClick={() => {
                             setState({
-                              currentState:"normal", 
-                              firstname:"", 
-                                lastname:"", 
-                            })
-                            
+                              currentState: "normal",
+                              firstname: "",
+                              lastname: "",
+                            });
                           }}
                         />
                       )}
                     </Box>
 
                     {currentState === "validate" && (
-                      <Box display="flex" justifyContent="center" alignItems="center">
-                        <Typography variant="caption" color="inherit" sx={useStyles.submitBtn} style={{ marginRight: "10px" }}>
+                      <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                      >
+                        <Typography
+                          variant="caption"
+                          color="inherit"
+                          sx={useStyles.submitBtn}
+                          style={{ marginRight: "10px" }}
+                        >
                           Certificate generated with id {certificateId}
                         </Typography>
                         <IconButton
@@ -350,7 +393,12 @@ const GenerateCert = () => {
                           size="small"
                           endIcon={<OpenInNewOutlined />}
                           onClick={() => {
-                            window.open(`${window.location.href.slice(0, -window.location.pathname.length)}/certificate/${certificateId}`);
+                            window.open(
+                              `${window.location.href.slice(
+                                0,
+                                -window.location.pathname.length
+                              )}/certificate/${certificateId}`
+                            );
                           }}
                         >
                           Open
@@ -361,10 +409,11 @@ const GenerateCert = () => {
                 </form>
               </TabPanel>
               <TabPanel value={tabValue} index={1}>
-                <form style={{ ...useStyles.container, marginTop: "3vh" }} autoComplete="off" onSubmit={revokeCertificateFunction}>
-                  <Grid item xs={12} sm={12}>
-                    <Typography variant="subtitle1">Input the id of the certificate you want to revoke</Typography>
-                  </Grid>
+                <form
+                  style={{ ...useStyles.container, marginTop: "3vh" }}
+                  autoComplete="off"
+                  onSubmit={revokeCertificateFunction}
+                >
                   <Grid item xs={12} sm={12}>
                     <TextField
                       required
@@ -378,8 +427,15 @@ const GenerateCert = () => {
                     />
                   </Grid>
                   <Grid item xs={12} sm={12}>
-                    <Box display="flex" justifyContent="center" alignItems="center">
-                      <SubmitAnimation currentState={revokeCurrentState} sx={useStyles.submitBtn} />
+                    <Box
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                    >
+                      <SubmitAnimation
+                        currentState={revokeCurrentState}
+                        sx={useStyles.submitBtn}
+                      />
                       {revokeCurrentState === "validate" && (
                         <IconButton
                           style={{ marginTop: "16px" }}
@@ -399,8 +455,17 @@ const GenerateCert = () => {
                     </Box>
 
                     {revokeCurrentState === "validate" && (
-                      <Box display="flex" justifyContent="center" alignItems="center">
-                        <Typography variant="caption" color="inherit" sx={useStyles.submitBtn} style={{ marginRight: "10px" }}>
+                      <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                      >
+                        <Typography
+                          variant="caption"
+                          color="inherit"
+                          sx={useStyles.submitBtn}
+                          style={{ marginRight: "10px" }}
+                        >
                           Revoked Certificate with id {revokeCertificateId}
                         </Typography>
                         <IconButton
@@ -418,7 +483,12 @@ const GenerateCert = () => {
                           size="small"
                           endIcon={<OpenInNewOutlined />}
                           onClick={() => {
-                            window.open(`${window.location.href.slice(0, -window.location.pathname.length)}/certificate/${revokeCertificateId}`);
+                            window.open(
+                              `${window.location.href.slice(
+                                0,
+                                -window.location.pathname.length
+                              )}/certificate/${revokeCertificateId}`
+                            );
                           }}
                         >
                           Open
