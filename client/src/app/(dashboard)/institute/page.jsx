@@ -1,5 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import Institution from "../../../contracts/Institution.json";
+import Certification from "../../../contracts/Certification.json";
+import Web3 from "web3";
 import {
   TextField,
   Paper,
@@ -8,40 +11,28 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
-  AppBar,
-  Tab,
-  Tabs,
   Button,
-  Box,
   IconButton,
+  CircularProgress,
+  Box,
+  AppBar,
+  Tabs,
+  Tab,
   styled,
 } from "@mui/material";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   OpenInNewOutlined,
   FileCopyOutlined,
   LoopOutlined,
 } from "@mui/icons-material";
-import { Error } from "@/components/Error";
-import SubmitAnimation from "@/components/SubmitApplication";
-import { v4 as uuidv4 } from "uuid";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { encrypt } from "../../../utils/encrypt.js";
+// import { useRouter } from "next/router";
 import NavBar from "@/components/Navbar";
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`full-width-tabpanel-${index}`}
-      aria-labelledby={`full-width-tab-${index}`}
-      {...other}
-    >
-      {children}
-    </div>
-  );
-}
+// import Button from "@/components/SubmitApplication";
+
+// Styled Components
 const StyledTabs = styled(Tabs)({
   "& .MuiTabs-indicator": {
     backgroundColor: "#b09ce8",
@@ -59,6 +50,7 @@ const StyledTab = styled(Tab)(({ theme }) => ({
   },
 }));
 
+// Styles
 const useStyles = {
   appbar: {
     background:
@@ -140,24 +132,122 @@ const useStyles = {
 
 const GenerateCert = () => {
   const [state, setState] = useState({
-    instituteName: "Sample Institute",
-    instituteAcronym: "SI",
-    instituteWebsite: "https://sampleinstitute.com",
-    instituteCourses: [
-      { course_name: "Course 1" },
-      { course_name: "Course 2" },
-      { course_name: "Course 3" },
-    ],
+    owner: "0x0",
+    isCorrectInstitute: false,
+    renderLoading: true,
+    renderMetaMaskError: false,
+    networkError: false,
+    instituteName: "",
+    instituteAcronym: "",
+    instituteWebsite: "",
+    instituteCourses: [],
     firstname: "",
     lastname: "",
-    selectedCourse: null,
+    isLegitInstitute: null,
     currentState: "normal",
     certificateId: "",
     courseIndex: 0,
+    creationDate: null,
+    txnFailed: false,
     tabValue: 0,
     revokeCertificateId: "",
     revokeCurrentState: "normal",
+    revokeTxnFailed: false,
   });
+
+  // Load Web3 and check address
+  useEffect(() => {
+    loadWeb3Metamask();
+  }, []);
+
+  const loadWeb3Metamask = async () => {
+    if (window.ethereum) {
+      window.web3 = new Web3(window.ethereum);
+      await window.ethereum.enable();
+      setState((prev) => ({ ...prev, renderMetaMaskError: false }));
+      checkAddressAndGetCourses();
+    } else if (window.web3) {
+      window.web3 = new Web3(window.web3.currentProvider);
+      setState((prev) => ({ ...prev, renderMetaMaskError: false }));
+      checkAddressAndGetCourses();
+    } else {
+      toast.warning(
+        "❕ Non-Ethereum browser detected. You should consider trying MetaMask!"
+      );
+      setState((prev) => ({
+        ...prev,
+        renderLoading: false,
+        renderMetaMaskError: true,
+      }));
+    }
+  };
+
+  const checkAddressAndGetCourses = async () => {
+    const web3 = window.web3;
+    if (!web3) return;
+
+    const accounts = await web3.eth.getAccounts();
+    const caller = accounts[0];
+
+    let networkId;
+    try {
+      networkId = await web3.eth.net.getId();
+    } catch (err) {
+      toast.warning(
+        "❕ Please make sure you are connected to the correct network"
+      );
+      setState((prev) => ({
+        ...prev,
+        renderLoading: false,
+        networkError: true,
+      }));
+      return;
+    }
+
+    if (!(networkId in Institution.networks)) {
+      toast.warning(
+        "❕ Please make sure you are connected to the correct network"
+      );
+      setState((prev) => ({
+        ...prev,
+        networkError: true,
+        renderLoading: false,
+      }));
+      return;
+    }
+
+    const institutionData = Institution.networks[networkId];
+    const institution = new web3.eth.Contract(
+      Institution.abi,
+      institutionData.address
+    );
+
+    try {
+      const res = await institution.methods
+        .getInstituteData()
+        .call({ from: caller });
+      const formattedInstituteCoursesData = res[3].map((x) => ({
+        course_name: x.course_name,
+      }));
+
+      setState((prev) => ({
+        ...prev,
+        instituteName: res[0],
+        instituteAcronym: res[1],
+        instituteWebsite: res[2],
+        instituteCourses: formattedInstituteCoursesData,
+        isLegitInstitute: true,
+        renderLoading: false,
+      }));
+    } catch (error) {
+      toast.warning("❕ You are not authorized to access this page");
+      setState((prev) => ({
+        ...prev,
+        isLegitInstitute: false,
+        renderLoading: false,
+      }));
+    }
+  };
 
   const handleChange = (name) => (event) => {
     setState((prev) => ({
@@ -168,10 +258,6 @@ const GenerateCert = () => {
     }));
   };
 
-  const handleTabChange = (event, newValue) => {
-    setState((prev) => ({ ...prev, tabValue: newValue }));
-  };
-
   const submitData = async (event) => {
     event.preventDefault();
     if (state.currentState === "validate") return;
@@ -180,17 +266,55 @@ const GenerateCert = () => {
 
     const { firstname, lastname, courseIndex } = state;
     const candidateName = `${firstname} ${lastname}`;
-    const certId = uuidv4();
+    const creationDate = new Date().getTime();
+    const creationDateString = creationDate.toString();
 
-    // Simulate a delay for submission
-    setTimeout(() => {
+    const web3 = window.web3;
+    const accounts = await web3.eth.getAccounts();
+    const caller = accounts[0];
+    const networkId = await web3.eth.net.getId();
+    const certificationData = Certification.networks[networkId];
+    const certification = new web3.eth.Contract(
+      Certification.abi,
+      certificationData.address
+    );
+
+    try {
+      const encryptionKey = "your-secret-key";
+      const encryptedDate = encrypt(creationDateString, encryptionKey);
+      const transaction = await certification.methods
+        .generateCertificate(candidateName, courseIndex, encryptedDate)
+        .send({ from: caller, gas: 2100000 });
+
+      const event = transaction.events.CertificateGenerated;
+      if (event) {
+        const certificateId = event.returnValues.certificateId;
+        setState((prev) => ({
+          ...prev,
+          currentState: "validate",
+          certificateId: certificateId,
+          txnFailed: false,
+        }));
+        toast.success("✅ Successfully generated certificate!");
+      } else {
+        throw new Error("CertificateGenerated event not found.");
+      }
+    } catch (error) {
+      console.error(error);
       setState((prev) => ({
         ...prev,
-        currentState: "validate",
-        certificateId: certId,
+        currentState: "normal",
+        txnFailed: true,
       }));
-      toast.success("✅ Certificate generated successfully!");
-    }, 2000);
+
+      if (error.code === -32603) {
+        toast.error(
+          "❌ Transaction failed. Please check that you have set enough gas limit."
+        );
+      } else if (error.code === 4001) {
+        toast.error("❌ Transaction rejected!");
+      }
+    }
   };
 
   const revokeCertificateFunction = async (event) => {
@@ -199,34 +323,91 @@ const GenerateCert = () => {
 
     setState((prev) => ({ ...prev, revokeCurrentState: "load" }));
 
-    // Simulate a delay for revocation
-    setTimeout(() => {
+    const { revokeCertificateId } = state;
+    const web3 = window.web3;
+    const accounts = await web3.eth.getAccounts();
+    const caller = accounts[0];
+    const networkId = await web3.eth.net.getId();
+    const certificationData = Certification.networks[networkId];
+    const certification = new web3.eth.Contract(
+      Certification.abi,
+      certificationData.address
+    );
+
+    try {
+      await certification.methods
+        .revokeCertificate(revokeCertificateId)
+        .send({ from: caller, gas: 2100000 });
+
+      toast.success("✅ Successfully revoked certificate!");
       setState((prev) => ({
         ...prev,
         revokeCurrentState: "validate",
+        revokeTxnFailed: false,
       }));
-      toast.success("✅ Certificate revoked successfully!");
-    }, 2000);
+    } catch (error) {
+      console.error(error);
+      setState((prev) => ({
+        ...prev,
+        revokeCurrentState: "normal",
+        revokeTxnFailed: true,
+      }));
+
+      if (error.code === -32603) {
+        toast.error(
+          "❌ Revocation Transaction failed. Please check that certificate id exists and you have set enough gas limit."
+        );
+      } else if (error.code === 4001) {
+        toast.error("❌ Revocation Transaction rejected!");
+      }
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setState((prev) => ({ ...prev, tabValue: newValue }));
   };
 
   const {
+    renderLoading,
+    renderMetaMaskError,
+    networkError,
     instituteName,
     instituteAcronym,
     instituteWebsite,
     instituteCourses,
+    isLegitInstitute,
     firstname,
     lastname,
     certificateId,
     currentState,
+    txnFailed,
     tabValue,
     revokeCertificateId,
     revokeCurrentState,
+    revokeTxnFailed,
   } = state;
+
+  if (renderLoading) return <div>Connecting...</div>;
+  if (renderMetaMaskError)
+    return (
+      <div>
+        You are not using an Ethereum-based browser. Please install MetaMask.
+      </div>
+    );
+  if (networkError)
+    return <div>Please connect to the correct Ethereum network.</div>;
+  if (isLegitInstitute === false)
+    return <div>You are not authorized to access this page.</div>;
 
   return (
     <>
       <NavBar />
-      <Grid container align="center" justifyContent={"center"}>
+      <Grid
+        container
+        align="center"
+        justifyContent={"center"}
+        alignItems="center"
+      >
         <Grid item xs={8} sm={8}>
           <Typography
             variant="h4"
@@ -255,12 +436,18 @@ const GenerateCert = () => {
               </StyledTabs>
             </AppBar>
             <div style={useStyles.tabPanel}>
-              <TabPanel value={tabValue} index={0}>
+              {tabValue === 0 && (
                 <form
                   style={{ ...useStyles.container, marginTop: "3vh" }}
                   autoComplete="off"
                   onSubmit={submitData}
                 >
+                  <Grid item xs={12} sm={12}>
+                    <Typography variant="subtitle1">
+                      Input the certificate details below to generate a
+                      certificate
+                    </Typography>
+                  </Grid>
                   <Grid item xs={12} sm={12}>
                     <TextField
                       required
@@ -339,31 +526,47 @@ const GenerateCert = () => {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} sm={12} justifyContent>
+                  <Grid item xs={12} sm={12}>
                     <Box
                       display="flex"
                       justifyContent="center"
                       alignItems="center"
                     >
-                      <SubmitAnimation
-                        currentState={currentState}
-                        className={useStyles.submitBtn}
-                      />
+                      <Button
+                        type="submit"
+                        // variant="contained"
+                        // color="primary"
+                        // className={`animatedButton ${
+                        //   currentState === "load" ? "load" : ""
+                        // }`}
+                        sx={useStyles.submitBtn}
+                        disabled={currentState === "load"}
+                        // currentState={currentState}
+                      >
+                        {currentState === "load" ? (
+                          <CircularProgress size={24} />
+                        ) : (
+                          "Generate Certificate"
+                        )}
+                      </Button>
                       {currentState === "validate" && (
                         <IconButton
-                          style={{ marginTop: "10px" }}
+                          style={{ marginTop: "16px" }}
                           color="primary"
                           onClick={() => {
-                            setState({
+                            setState((prev) => ({
+                              ...prev,
                               currentState: "normal",
                               firstname: "",
                               lastname: "",
-                            });
+                              courseIndex: 0,
+                            }));
                           }}
-                        />
+                        >
+                          <LoopOutlined />
+                        </IconButton>
                       )}
                     </Box>
-
                     {currentState === "validate" && (
                       <Box
                         display="flex"
@@ -405,15 +608,25 @@ const GenerateCert = () => {
                         </Button>
                       </Box>
                     )}
+                    {txnFailed && (
+                      <div>
+                        Failed to generate certificate, please try again.
+                      </div>
+                    )}
                   </Grid>
                 </form>
-              </TabPanel>
-              <TabPanel value={tabValue} index={1}>
+              )}
+              {tabValue === 1 && (
                 <form
                   style={{ ...useStyles.container, marginTop: "3vh" }}
                   autoComplete="off"
                   onSubmit={revokeCertificateFunction}
                 >
+                  <Grid item xs={12} sm={12}>
+                    <Typography variant="subtitle1">
+                      Input the id of the certificate you want to revoke
+                    </Typography>
+                  </Grid>
                   <Grid item xs={12} sm={12}>
                     <TextField
                       required
@@ -421,9 +634,9 @@ const GenerateCert = () => {
                       label="Certificate ID"
                       sx={useStyles.instituteField}
                       value={revokeCertificateId}
+                      onChange={handleChange("revokeCertificateId")}
                       margin="normal"
                       variant="outlined"
-                      onChange={handleChange("revokeCertificateId")}
                     />
                   </Grid>
                   <Grid item xs={12} sm={12}>
@@ -432,15 +645,24 @@ const GenerateCert = () => {
                       justifyContent="center"
                       alignItems="center"
                     >
-                      <SubmitAnimation
-                        currentState={revokeCurrentState}
+                      <Button
+                        type="submit"
+                        // variant="contained"
+                        // color="primary"
                         sx={useStyles.submitBtn}
-                      />
+                        disabled={revokeCurrentState === "load"}
+                        currentState={revokeCurrentState}
+                      >
+                        {revokeCurrentState === "load" ? (
+                          <CircularProgress size={24} />
+                        ) : (
+                          "Revoke Certificate"
+                        )}
+                      </Button>
                       {revokeCurrentState === "validate" && (
                         <IconButton
                           style={{ marginTop: "16px" }}
                           color="primary"
-                          variant="contained"
                           onClick={() => {
                             setState((prev) => ({
                               ...prev,
@@ -453,7 +675,6 @@ const GenerateCert = () => {
                         </IconButton>
                       )}
                     </Box>
-
                     {revokeCurrentState === "validate" && (
                       <Box
                         display="flex"
@@ -495,14 +716,27 @@ const GenerateCert = () => {
                         </Button>
                       </Box>
                     )}
+                    {revokeTxnFailed && (
+                      <div>Failed to revoke certificate, please try again.</div>
+                    )}
                   </Grid>
                 </form>
-              </TabPanel>
+              )}
             </div>
           </Paper>
         </Grid>
       </Grid>
-      <ToastContainer />
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </>
   );
 };

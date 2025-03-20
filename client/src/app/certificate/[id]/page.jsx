@@ -13,7 +13,7 @@ import {
   Typography,
   Button,
 } from "@mui/material";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Error } from "@/components/Error";
 import { makeStyles, useTheme } from "@mui/styles";
 import { Cancel } from "@mui/icons-material";
@@ -22,6 +22,10 @@ import VerifyBadge from "@/components/VerifyBadge";
 import { forwardRef } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import Web3 from "web3";
+import Certification from "../../../contracts/Certification.json";
+import { decrypt } from "@/utils/decrypt";
+
 const useStyles = makeStyles((theme) => ({
   root: {
     padding: "30px",
@@ -86,60 +90,144 @@ const Page = () => {
   const params = useParams();
   const id = params.id;
   const classes = useStyles();
+  const [certificateData, setCertificateData] = useState(null);
   const [certExist, setCertExist] = useState(true);
-  const [loading, setloading] = useState(false);
-  console.log(id);
-  const certicateRef = useRef(null)
-  //function for dowloading certificate as pdf
-  const handleDownloadPdf =()=>{
-    const input = certicateRef.current; 
-    console.log("started certificate");
-    if(input){
-      html2canvas(input, {scale:2}).then((canvas)=>{
-        const imgdata = canvas.toDataURL("image/png"); 
-        const pdf = new jsPDF("p", "mm", "a4"); 
-        const imgWidth = 210; 
-        const imgHeight = (canvas.height *imgWidth) /canvas.width; 
-        pdf.addImage(imgdata, "PNG",0,0, imgWidth,imgHeight); 
-        pdf.save("certificate.pdf");
-      })
+  const [loading, setLoading] = useState(false);
+  const certicateRef = useRef(null);
+
+  // Initialize Web3 and contract
+  const connectWeb3 = async () => {
+    if (typeof window.ethereum !== "undefined") {
+      const web3 = new Web3(window.ethereum);
+      await window.ethereum.enable();
+      const networkId = await web3.eth.net.getId();
+      const deployedNetwork = Certification.networks[networkId];
+      const contractInstance = new web3.eth.Contract(
+        Certification.abi,
+        deployedNetwork && deployedNetwork.address
+      );
+      return { web3, contractInstance };
+    } else {
+      throw new Error("Please install MetaMask!");
     }
-  }
+  };
+
+  // Fetch certificate data
+  const fetchCertificateData = async () => {
+    try {
+      setLoading(true);
+      const { contractInstance } = await connectWeb3();
+
+      const data = await contractInstance.methods.getData(id).call();
+      if (!data || !data[0]) {
+        setCertExist(false);
+        return;
+      }
+
+      console.log(data);
+      const encryptionKey = "your-secret-key"; // SAME key used during encryption
+      const encryptedDate = data[2];
+      const decryptedDate = decrypt(encryptedDate, encryptionKey);
+
+      //debugging log
+      console.log("Decrypted Date:", decryptedDate);
+
+      const timestamp = Number(decryptedDate);
+      const date = new Date(timestamp);
+      const formattedDate = `${date.getDate()}-${
+        date.getMonth() + 1
+      }-${date.getFullYear()}`;
+
+      console.log("Formatted Date:", formattedDate);
+
+      // Update state with fetched data
+      setCertificateData({
+        candidateName: data[0],
+        courseName: data[1],
+        creationDate: formattedDate,
+        instituteName: data[3],
+        instituteAcronym: data[4],
+        instituteLink: data[5],
+        revoked: data[6], // Boolean: true if revoked
+      });
+      setCertExist(true);
+    } catch (error) {
+      console.error("Error fetching certificate:", error);
+      setCertExist(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCertificateData();
+  }, [id]);
+
+  // Function for downloading certificate as PDF
+  const handleDownloadPdf = () => {
+    const input = certicateRef.current;
+    if (input) {
+      html2canvas(input, {
+        scale: 3, // Higher scale for better quality
+        windowWidth: 1200, // Force width to prevent cropping
+        windowHeight: 1700, // Ensure full capture
+      }).then((canvas) => {
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("p", "mm", "a4"); // Keep A4 format
+        const imgWidth = 210;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        pdf.save("certificate.pdf");
+      });
+    }
+  };
+
   return (
     <>
       <NavBar />
       <Grid container className={classes.root} justifyContent={"center"}>
         <Grid xs={12} sm={8}>
-          {loading && <p>loading...</p>}
+          {loading && <p>Loading...</p>}
           {!loading && !certExist && (
             <Error
               notFound
-              messsage={"Certificate do not exists"}
-              label="Please Enter a Valid Id"
+              message={"Certificate does not exist"}
               buttonText="Okay"
             />
           )}
-          {!loading && certExist && (
+          {!loading && certExist && certificateData && (
             <Certtificate
               id={id}
-              candidateName={"Raj "}
-              courseName={"Data Science"}
-              creationDate={"25-02-2023"}
-              instituteName={"Kaziranga University"}
-              instituteAcronym={"KU"}
-              institutelink={"www.ku.com"}
-              revoked={false}
+              candidateName={certificateData.candidateName}
+              courseName={certificateData.courseName}
+              creationDate={certificateData.creationDate}
+              instituteName={certificateData.instituteName}
+              instituteAcronym={certificateData.instituteAcronym}
+              institutelink={certificateData.instituteLink}
+              revoked={certificateData.revoked}
               ref={certicateRef}
               logo={
                 "https://www.bing.com/images/search?q=kaziranga%20university%20logo&FORM=IQFRBA&id=B5A8EB5155D2D93064F4E758F1A7C89A82CD6627"
               }
             />
           )}
-          {!loading && certExist && (
-            <Box style={{display:'flex', flexDirection:'row', }}>
-                <Button onClick={handleDownloadPdf} variant={"text"} color="primary" style={{width:"100%",  padding:10, marginTop:"10px", alignItems:"center", justifyItems:"center"}}>
-              Dowload as Pdf
-               </Button>
+          {!loading && certExist && certificateData && (
+            <Box style={{ display: "flex", flexDirection: "row" }}>
+              <Button
+                onClick={handleDownloadPdf}
+                variant={"text"}
+                color="primary"
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  marginTop: "10px",
+                  alignItems: "center",
+                  justifyItems: "center",
+                }}
+              >
+                Download as PDF
+              </Button>
             </Box>
           )}
         </Grid>
@@ -147,6 +235,7 @@ const Page = () => {
     </>
   );
 };
+
 function SimpleDialog(props) {
   const classes = useStyles(props);
   const { onClose, open, selectedValue, revoked } = props;
@@ -165,9 +254,11 @@ function SimpleDialog(props) {
         {!revoked && (
           <>
             <DialogTitle id="simple-dialog-title">
-              <Typography variant="h5">
-                What are Verified Credentials?
-              </Typography>
+              <div>
+                <Typography variant="h5">
+                  What are Verified Credentials?
+                </Typography>
+              </div>
             </DialogTitle>
             <DialogContent>
               <Box>
@@ -189,9 +280,11 @@ function SimpleDialog(props) {
         {revoked && (
           <>
             <DialogTitle id="simple-dialog-title">
-              <Typography variant="h5">
-                What are Revoked Credentials?
-              </Typography>
+              <div>
+                <Typography variant="h5">
+                  What are Revoked Credentials?
+                </Typography>
+              </div>
             </DialogTitle>
             <DialogContent>
               <Box>
@@ -235,6 +328,7 @@ function SimpleDialog(props) {
     </Dialog>
   );
 }
+
 const VerificationStatus = (props) => {
   const classes = useStyles(props);
   const theme = useTheme();
@@ -263,7 +357,10 @@ const VerificationStatus = (props) => {
               {props.revoked ? "Revoked" : "Verified"}
             </Box>
             <a
-              href="javascript:void(0)"
+              // href="javascript:void(0)"
+              // style={{ color: "white", fontSize: "12px" }}
+              href="#"
+              onClick={(e) => e.preventDefault()}
               style={{ color: "white", fontSize: "12px" }}
             >
               What does this mean?
@@ -274,6 +371,7 @@ const VerificationStatus = (props) => {
     </>
   );
 };
+
 const DetailGroup = ({ label, content }) => {
   return (
     <>
@@ -292,78 +390,97 @@ const DetailGroup = ({ label, content }) => {
 };
 
 const Certtificate = forwardRef(
-  ({
-  id,
-  candidateName,
-  courseName,
-  creationDate,
-  instituteName,
-  instituteAcronym,
-  institutelink,
-  revoked,
-},ref) => {
-  const classes = useStyles();
-  const dateObject = new Date(creationDate);
-  const day = dateObject.toLocaleString("en-us", { day: "numeric" });
-  const month = dateObject.toLocaleString("en-us", { month: "long" });
-  const year = dateObject.toLocaleString("en-us", { yaer: "numeric" });
-  const formatteddate = `${day} ${month} ${year}`;
+  (
+    {
+      id,
+      candidateName,
+      courseName,
+      creationDate,
+      instituteName,
+      instituteAcronym,
+      institutelink,
+      revoked,
+    },
+    ref
+  ) => {
+    const classes = useStyles({ revoked });
 
-  return (
-    <>
-      <Paper className={classes.paper} ref={ref}>
-        <Grid container>
-          <Grid item xs={12} className={classes.certHeader}>
-            University Credentials
-          </Grid>
-          <Grid item xs={12} className={classes.certTopSection}>
-            <Grid
-              container
-              justifyContent={"space-between"}
-              alignItems={"flex-start"}
-            >
-              <Grid item>
-                <DetailGroup label={"Student Name"} content={candidateName} />
-              </Grid>
-              <Grid item style={{ marginRight: "10px" }}>
-                <VerificationStatus revoked={revoked} />
-              </Grid>
-            </Grid>
-          </Grid>
-          <Grid item xs={12} className={classes.certMidSection}>
-            <Grid container>
-              <Grid item xs={12} lg={6}>
-                <DetailGroup label={"Course Name"} content={courseName} />
-              </Grid>
-              <Grid item xs={12} lg={6}>
-                <DetailGroup label={"Institute Name"} content={instituteName} />
-              </Grid>
-              <Grid item xs={12} lg={6}>
-                <DetailGroup
-                  label={"Institute Acronym"}
-                  content={instituteAcronym}
-                />
-              </Grid>
-              <Grid item xs={12} lg={6}>
-                <DetailGroup label={"Institute Link"} content={institutelink} />
-              </Grid>
-            </Grid>
-          </Grid>
-          <Grid item sm={12} className={classes.certBottomSection}>
+    return (
+      <>
+        <Paper className={classes.paper} ref={ref}>
           <Grid container>
-              <Grid item xs={12} lg={6}>
-                <DetailGroup label={"Issuance Date"} content={creationDate} />
+            <Grid item xs={12} className={classes.certHeader}>
+              University Credentials
+            </Grid>
+            <Grid item xs={12} className={classes.certTopSection}>
+              <Grid
+                container
+                justifyContent={"space-between"}
+                alignItems={"flex-start"}
+              >
+                <Grid item>
+                  <DetailGroup label={"Student Name"} content={candidateName} />
+                </Grid>
+                <Grid item style={{ marginRight: "10px" }}>
+                  <VerificationStatus revoked={revoked} />
+                </Grid>
               </Grid>
-              <Grid item xs={12} lg={6}>
-                <DetailGroup label={"Certificate Id"} content={id} />
+            </Grid>
+            <Grid item xs={12} className={classes.certMidSection}>
+              <Grid container>
+                <Grid item xs={12} lg={6}>
+                  <DetailGroup label={"Course Name"} content={courseName} />
+                </Grid>
+                <Grid item xs={12} lg={6}>
+                  <DetailGroup
+                    label={"Institute Name"}
+                    content={instituteName}
+                  />
+                </Grid>
+                <Grid item xs={12} lg={6}>
+                  <DetailGroup
+                    label={"Institute Acronym"}
+                    content={instituteAcronym}
+                  />
+                </Grid>
+                <Grid item xs={12} lg={6}>
+                  <DetailGroup
+                    label={"Institute Link"}
+                    content={institutelink}
+                  />
+                </Grid>
               </Grid>
+            </Grid>
+            <Grid item sm={12} className={classes.certBottomSection}>
+              <Grid container>
+                <Grid item xs={12} lg={6}>
+                  <DetailGroup label={"Issuance Date"} content={creationDate} />
+                </Grid>
+                <Grid item xs={12} lg={6}>
+                  <DetailGroup
+                    label={"Certificate Id"}
+                    content={
+                      <span
+                        style={{
+                          fontSize: "14px",
+                          wordBreak: "break-word",
+                          overflowWrap: "break-word",
+                          display: "inline-block",
+                          maxWidth: "100%",
+                        }}
+                      >
+                        {id}
+                      </span>
+                    }
+                  />
+                </Grid>
               </Grid>
+            </Grid>
           </Grid>
-        </Grid>
-      </Paper>
-    </>
-  );
-}
-)
+        </Paper>
+      </>
+    );
+  }
+);
 
 export default Page;

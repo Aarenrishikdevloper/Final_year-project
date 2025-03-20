@@ -22,12 +22,19 @@ import {
   DialogActions,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Error } from "@/components/Error"; // Ensure this path is correct
 import Lock from "@mui/icons-material/Lock";
 import AddCircleOutline from "@mui/icons-material/AddCircleOutline";
 import NavBar from "@/components/Navbar";
 import { Delete, DeleteOutlined } from "@mui/icons-material";
+
+// Blockchain setup
+import Web3 from "web3";
+import InstitutionABI from "../../../contracts/Institution.json";
+
+const INSTITUTION_CONTRACT_ADDRESS =
+  "0x949149Cb18DCF0F28a95CF188a6DC8693eF1349F";
 
 // Replace makeStyles with styled
 const useStyles = makeStyles((theme) => ({
@@ -87,27 +94,121 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Page = () => {
-  const [renderadmin, setRenderAdmin] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [rendermetamaskError, setRenderMetamaskError] = useState(false);
-  const [networkerror, setNetworkError] = useState(false);
-  const [open, setopen] = useState(false);
   const classes = useStyles();
-  const onClose = () => {
-    setopen(false);
+  const [web3, setWeb3] = useState(null);
+  const [account, setAccount] = useState("");
+  const [contract, setContract] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [instituteAddress, setInstituteAddress] = useState("");
+  const [instituteName, setInstituteName] = useState("");
+  const [instituteAcronym, setInstituteAcronym] = useState("");
+  const [instituteWebsite, setInstituteWebsite] = useState("");
+  const [courseName, setCourseName] = useState("");
+  const [courses, setCourses] = useState([]); // Store list of courses
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState("");
+
+  // Initialize blockchain connection
+  useEffect(() => {
+    async function connectBlockchain() {
+      try {
+        if (!window.ethereum) {
+          setError("MetaMask not detected! Please install it.");
+          setLoading(false);
+          return;
+        }
+
+        const web3Instance = new Web3(window.ethereum);
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+
+        const accounts = await web3Instance.eth.getAccounts();
+        setAccount(accounts[0]);
+
+        const networkId = await web3Instance.eth.net.getId();
+        const deployedNetwork = InstitutionABI.networks[networkId];
+
+        if (!deployedNetwork) {
+          setError("Wrong network! Connect to the correct Ethereum network.");
+          setLoading(false);
+          return;
+        }
+
+        const contractInstance = new web3Instance.eth.Contract(
+          InstitutionABI.abi,
+          INSTITUTION_CONTRACT_ADDRESS
+        );
+
+        // Check if the connected account is the contract owner
+        const owner = await contractInstance.methods.owner().call();
+        setIsAdmin(accounts[0] === owner);
+        setContract(contractInstance);
+        setWeb3(web3Instance);
+      } catch (err) {
+        setError("Failed to connect to blockchain!");
+      } finally {
+        setLoading(false);
+      }
+    }
+    connectBlockchain();
+  }, []);
+
+  // Add Institute to Blockchain
+  const handleAddInstitute = async () => {
+    if (!web3 || !contract) {
+      alert("Web3 not initialized. Check your connection.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const formattedCourses = courses.map((course) => ({
+        course_name: course,
+      }));
+
+      console.log("Sending Transaction:", {
+        instituteAddress,
+        instituteName,
+        instituteAcronym,
+        instituteWebsite,
+        formattedCourses,
+      });
+
+      await contract.methods
+        .addInstitute(
+          instituteAddress,
+          instituteName,
+          instituteAcronym,
+          instituteWebsite,
+          formattedCourses
+        )
+        .send({ from: account });
+
+      alert("Institute added successfully!");
+      setInstituteName("");
+      setInstituteAddress("");
+      setInstituteAcronym("");
+      setInstituteWebsite("");
+      setCourses([]);
+    } catch (error) {
+      console.error("Error adding institute:", error);
+      alert("Failed to add institute. Check console for errors.");
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <>
       {!loading && <NavBar />}
       {loading ? (
-        <p>Connecting</p>
-      ) : rendermetamaskError ? (
+        <p>Connecting to Blockchain...</p>
+      ) : error ? (
         <Error
-          message="You are not using an Ethereum-based browser"
+          message={error}
           label="You could download Metamask on this browser or use another Ethereum-based browser"
           buttonText="Done"
         />
-      ) : renderadmin ? (
+      ) : isAdmin ? (
         <>
           <Typography
             variant="h4"
@@ -123,30 +224,10 @@ const Page = () => {
               fontWeight: "bold",
             }}
           >
-            Welcome, Central Authority
+            Welcome, Blockchain Admin
           </Typography>
-        </>
-      ) : (
-        <>
-          {!networkerror && (
-            <Error
-              message="You are not connected to a valid central authority account"
-              label="Please try again once you have connected to the right account"
-              buttonText="Done"
-            />
-          )}
-          {networkerror && (
-            <Error
-              message="You are not connected to an Ethereum network"
-              label="Please try again once you have connected to an Ethereum network"
-              buttonText="Done"
-            />
-          )}
-        </>
-      )}
-      {renderadmin && (
-        <div>
-          <Grid container style={{ height: "100%", justifyContent: "center" }}>
+
+          <Grid2 container style={{ height: "100%", justifyContent: "center" }}>
             <Paper className={classes.paper}>
               <Card
                 style={{
@@ -185,6 +266,8 @@ const Page = () => {
                     id="address"
                     label="Institute Account Adresss"
                     type="name"
+                    value={instituteAddress}
+                    onChange={(e) => setInstituteAddress(e.target.value)}
                     autoFocus
                   />
                 </FormControl>
@@ -201,6 +284,8 @@ const Page = () => {
                     id="address"
                     label="Institute Name"
                     type="name"
+                    value={instituteName}
+                    onChange={(e) => setInstituteName(e.target.value)}
                     autoFocus
                   />
                 </FormControl>
@@ -216,8 +301,10 @@ const Page = () => {
                   <InputLabel htmlFor="address">Institute Accronym</InputLabel>
                   <Input
                     id="address"
-                    label="Institute Accornym"
+                    label="Institute Acronym"
                     type="name"
+                    value={instituteAcronym}
+                    onChange={(e) => setInstituteAcronym(e.target.value)}
                     autoFocus
                   />
                 </FormControl>
@@ -236,6 +323,8 @@ const Page = () => {
                     id="address"
                     label="Institute Websites"
                     type="name"
+                    value={instituteWebsite}
+                    onChange={(e) => setInstituteWebsite(e.target.value)}
                     autoFocus
                   />
                 </FormControl>
@@ -255,13 +344,15 @@ const Page = () => {
                   >
                     Courses
                   </Typography>
-                  <IconButton color="primary" onClick={() => setopen(true)}>
+                  <IconButton color="primary" onClick={() => setOpen(true)}>
                     <AddCircleOutline />
                   </IconButton>
                 </Box>
+
+                {/* Add courses DialogBox */}
                 <Dialog
                   open={open}
-                  onClose={onClose}
+                  onClose={() => setOpen(false)}
                   aria-label="form-dialog-title"
                 >
                   <DialogTitle id="from-dialog-title">
@@ -279,6 +370,8 @@ const Page = () => {
                       label="Course name"
                       type="name"
                       autoFocus
+                      value={courseName}
+                      onChange={(e) => setCourseName(e.target.value)}
                       style={{
                         width: "95%",
                         marginLeft: "10px",
@@ -291,32 +384,50 @@ const Page = () => {
                     <Button
                       color="primary"
                       variant="outlined"
-                      onClick={onClose}
+                      onClick={() => setOpen(false)}
                     >
                       Cancel
                     </Button>
-                    <Button color="primary" variant="contained">
+                    <Button
+                      color="primary"
+                      variant="contained"
+                      onClick={() => {
+                        if (courseName.trim() !== "") {
+                          setCourses([...courses, courseName]); // Add course to list
+                          setCourseName(""); // Clear input field
+                          setOpen(false);
+                        }
+                      }}
+                    >
                       Submit
                     </Button>
                   </DialogActions>
                 </Dialog>
-                <>
+
+                {/* Display Courses */}
+                {courses.map((course, index) => (
                   <Box
-                    display={"flex"}
-                    justifyContent={"center"}
+                    key={index}
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
                     className={classes.courseItem}
                     style={{ marginLeft: "10px", marginRight: "10px" }}
                   >
-                    <Typography style={{ alignSelf: "center" }}>
-                      Course 1
-                    </Typography>
-                    <IconButton color="primary">
-                      <Delete Button="true" />
+                    <Typography>{course}</Typography>
+                    <IconButton
+                      color="primary"
+                      onClick={() =>
+                        setCourses(courses.filter((_, i) => i !== index))
+                      }
+                    >
+                      <Delete />
                     </IconButton>
                   </Box>
-                </>
+                ))}
+
                 <Dialog></Dialog>
-                <Button
+                {/* <Button
                   onClick={() => {}}
                   fullWidth
                   variant="outlined"
@@ -324,16 +435,18 @@ const Page = () => {
                   className={classes.submit}
                 >
                   Autofill
-                </Button>
+                </Button> */}
                 <Box m={1.5} />
                 <Button
-                  onClick={() => {}}
+                  onClick={handleAddInstitute}
                   type="submit"
                   fullWidth
                   variant="contained"
                   style={{
                     background:
                       "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+                    WebkitBorderBottomLeftRadius: "25px",
+                    WebkitBorderBottomRightRadius: "25px",
                   }}
                   className={classes.submit}
                 >
@@ -342,8 +455,14 @@ const Page = () => {
                 <Box m={2} />
               </form>
             </Paper>
-          </Grid>
-        </div>
+          </Grid2>
+        </>
+      ) : (
+        <Error
+          message="Unauthorized"
+          label="Only the contract owner can register institutes."
+          buttonText="OK"
+        />
       )}
     </>
   );

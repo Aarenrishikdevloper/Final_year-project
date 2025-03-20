@@ -30,11 +30,9 @@ contract Institution {
         string institute_link;
     }
 
-    function stringToBytes32(string memory source)
-        private
-        pure
-        returns (bytes32 result)
-    {
+    function stringToBytes32(
+        string memory source
+    ) private pure returns (bytes32 result) {
         bytes memory tempEmptyStringTest = bytes(source);
         if (tempEmptyStringTest.length == 0) {
             return 0x0;
@@ -76,18 +74,14 @@ contract Institution {
             instituteCourses[_address].push(_institute_courses[i]);
         }
         emit instituteAdded(_institute_name);
+        return true;
     }
 
     // Called by Institutions
     function getInstituteData()
         public
         view
-        returns (
-            string memory,
-            string memory,
-            string memory,
-            Course[] memory
-        )
+        returns (string memory, string memory, string memory, Course[] memory)
     {
         Institute memory temp = institutes[msg.sender];
         bytes memory tempEmptyStringNameTest = bytes(temp.institute_name);
@@ -104,17 +98,17 @@ contract Institution {
     }
 
     // Called by Smart Contracts
-    function getInstituteData(address _address)
+    function getInstituteData(
+        address _address
+    )
         public
         view
-        returns (
-            string memory,
-            string memory,
-            string memory,
-            Course[] memory
-        )
+        returns (string memory, string memory, string memory, Course[] memory)
     {
-        require(Certification(msg.sender).owner() == owner, "Incorrect smart contract & authorizations!");
+        require(
+            Certification(msg.sender).owner() == owner,
+            "Incorrect smart contract & authorizations!"
+        );
         Institute memory temp = institutes[_address];
         bytes memory tempEmptyStringNameTest = bytes(temp.institute_name);
         require(
@@ -129,11 +123,9 @@ contract Institution {
         );
     }
 
-    function checkInstitutePermission(address _address)
-        public
-        view
-        returns (bool)
-    {
+    function checkInstitutePermission(
+        address _address
+    ) public view returns (bool) {
         Institute memory temp = institutes[_address];
         bytes memory tempEmptyStringNameTest = bytes(temp.institute_name);
         if (tempEmptyStringNameTest.length > 0) {

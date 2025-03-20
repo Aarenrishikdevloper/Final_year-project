@@ -1,0 +1,58 @@
+first
+
+- npm install
+
+on both client and root
+
+install Ganache
+
+open ganache with a custom "New Workspace" with ethereum of 1000
+
+open Metamask
+
+- click add a custom network
+- give a name
+- give the RPC URL from ganache
+- give the chainID as 1337 if it is not automatically filled
+- then click on save
+- then click on the down arrow on the accont name
+- click on the "+ Add account or hardware wallet"
+- click on "import account"
+- then go to ganache
+- click on the "key icon"
+- copy the private key
+- paste it on metamask
+- click import
+
+now go to vs code
+
+open a terminal
+on the terminal
+
+- npx truffle compile
+
+- truffle migrate --reset --network development
+
+this is compile and deploy the samrt contracts to the localnet
+
+then from the "build/contracts"
+
+copy all the contents from the certification.json, institution.json, Migrations.json to - Certification.json, Institution.json, Migration.json on the "client/src/contracts/"
+
+on the terminal there is something like
+"Institution deployed to - 0x0....."
+
+copy the address and paste it in the
+
+"client/src/app/(dashboard)/admin/page.jsx"
+
+there will be const
+INSTITUTION_CONTRACT_ADDRESS = "0x949149Cb18DCF0F28a95CF188a6DC8693eF1349F";
+
+replace the address with the new address in the teminal that is copied
+
+now open a new terminal
+
+- cd client
+
+- npm run dev
