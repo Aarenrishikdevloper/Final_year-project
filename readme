@@ -35,6 +35,20 @@ on the terminal
 
 this is compile and deploy the samrt contracts to the localnet
 
+now go to ganache
+
+- click on contracts tab
+
+- click on "LINK TRUFFLE PROJECTS"
+
+- click on "Add Project"
+
+- navigate to the "truffle-config.js" file in the project directory
+
+- select it and the click on "save and restart" or "save"
+
+this will link the deployed contracts with the accounts so that we can interact with the contracts from the accounts in the ganache
+
 then from the "build/contracts"
 
 copy all the contents from the certification.json, institution.json, Migrations.json to - Certification.json, Institution.json, Migration.json on the "client/src/contracts/"
