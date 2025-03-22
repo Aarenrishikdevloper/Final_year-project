@@ -24,7 +24,7 @@ import { forwardRef } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import Web3 from "web3";
-import Certification from "../../../contracts/Certification.json";
+import Certification from "../../../../../build/contracts/Certification.json";
 import { decrypt } from "@/utils/decrypt";
 
 const useStyles = makeStyles((theme) => ({
