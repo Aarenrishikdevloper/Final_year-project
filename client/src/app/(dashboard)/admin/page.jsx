@@ -34,7 +34,7 @@ import Web3 from "web3";
 import InstitutionABI from "../../../contracts/Institution.json";
 
 const INSTITUTION_CONTRACT_ADDRESS =
-  "0x949149Cb18DCF0F28a95CF188a6DC8693eF1349F";
+  "0xE704F2B35238Fdc54bD7D0Fa8D8F6255b5f50E0d";
 
 // Replace makeStyles with styled
 const useStyles = makeStyles((theme) => ({

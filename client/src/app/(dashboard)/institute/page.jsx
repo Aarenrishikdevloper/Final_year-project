@@ -264,7 +264,8 @@ const GenerateCert = () => {
 
     setState((prev) => ({ ...prev, currentState: "load" }));
 
-    const { firstname, lastname, courseIndex } = state;
+    const { firstname, lastname, candidateEmail, candidateId, courseIndex } =
+      state;
     const candidateName = `${firstname} ${lastname}`;
     const creationDate = new Date().getTime();
     const creationDateString = creationDate.toString();
@@ -282,8 +283,23 @@ const GenerateCert = () => {
     try {
       const encryptionKey = "your-secret-key";
       const encryptedDate = encrypt(creationDateString, encryptionKey);
+
+      // Debugging Parameters
+      console.log("Debugging Parameters:");
+      console.log("Candidate Name:", candidateName);
+      console.log("Candidate Email:", candidateEmail);
+      console.log("Candidate ID:", candidateId);
+      console.log("Course Index:", courseIndex);
+      console.log("Encrypted Date:", encryptedDate);
+
       const transaction = await certification.methods
-        .generateCertificate(candidateName, courseIndex, encryptedDate)
+        .generateCertificate(
+          candidateName,
+          candidateEmail,
+          candidateId,
+          courseIndex,
+          encryptedDate
+        )
         .send({ from: caller, gas: 2100000 });
 
       const event = transaction.events.CertificateGenerated;
@@ -378,6 +394,8 @@ const GenerateCert = () => {
     isLegitInstitute,
     firstname,
     lastname,
+    candidateEmail,
+    candidateId,
     certificateId,
     currentState,
     txnFailed,
@@ -503,6 +521,32 @@ const GenerateCert = () => {
                       onChange={handleChange("lastname")}
                       margin="normal"
                       variant="outlined"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={12}>
+                    <TextField
+                      required
+                      // disabled
+                      id="candidate-Email"
+                      label="candidate Email"
+                      sx={useStyles.instituteField}
+                      value={candidateEmail}
+                      onChange={handleChange("candidateEmail")}
+                      margin="normal"
+                      variant="outlined"
+                      // InputProps={{ readOnly: true }}
+                    />
+                    <TextField
+                      required
+                      // disabled
+                      id="candidate-Id"
+                      label="candidate Id"
+                      sx={useStyles.instituteField}
+                      value={candidateId}
+                      onChange={handleChange("candidateId")}
+                      margin="normal"
+                      variant="outlined"
+                      // InputProps={{ readOnly: true }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={12}>

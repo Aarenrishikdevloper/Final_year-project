@@ -12,6 +12,7 @@ import {
   useMediaQuery,
   Typography,
   Button,
+  Grid2,
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { Error } from "@/components/Error";
@@ -34,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
   },
   certHeader: {
     backgroundColor: "white",
-    background: "linear-gradient(109.96deg,#363e98,#8ac6ff),#fff",
+    background: "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
     padding: "24px",
     borderRadius: "10px 10px 0 0 ",
     fontSize: "24px",
@@ -126,7 +127,7 @@ const Page = () => {
 
       console.log(data);
       const encryptionKey = "your-secret-key"; // SAME key used during encryption
-      const encryptedDate = data[2];
+      const encryptedDate = data[4];
       const decryptedDate = decrypt(encryptedDate, encryptionKey);
 
       //debugging log
@@ -143,12 +144,14 @@ const Page = () => {
       // Update state with fetched data
       setCertificateData({
         candidateName: data[0],
-        courseName: data[1],
+        candidateEmail: data[1],
+        candidateId: data[2],
+        courseName: data[3],
         creationDate: formattedDate,
-        instituteName: data[3],
-        instituteAcronym: data[4],
-        instituteLink: data[5],
-        revoked: data[6], // Boolean: true if revoked
+        instituteName: data[5],
+        instituteAcronym: data[6],
+        instituteLink: data[7],
+        revoked: data[8], // Boolean: true if revoked
       });
       setCertExist(true);
     } catch (error) {
@@ -200,6 +203,8 @@ const Page = () => {
             <Certtificate
               id={id}
               candidateName={certificateData.candidateName}
+              candidateEmail={certificateData.candidateEmail}
+              candidateId={certificateData.candidateId}
               courseName={certificateData.courseName}
               creationDate={certificateData.creationDate}
               instituteName={certificateData.instituteName}
@@ -394,6 +399,8 @@ const Certtificate = forwardRef(
     {
       id,
       candidateName,
+      candidateEmail,
+      candidateId,
       courseName,
       creationDate,
       instituteName,
@@ -425,6 +432,12 @@ const Certtificate = forwardRef(
                   <VerificationStatus revoked={revoked} />
                 </Grid>
               </Grid>
+              <Grid2 item xs={12} className={classes.certTopSection}>
+              <Grid item>
+                  <DetailGroup label={"Email"} content={candidateEmail} />
+                  <DetailGroup label={"ID"} content={candidateId} />
+                </Grid>
+              </Grid2>
             </Grid>
             <Grid item xs={12} className={classes.certMidSection}>
               <Grid container>

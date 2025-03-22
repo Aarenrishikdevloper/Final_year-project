@@ -24,6 +24,8 @@ contract Certification {
     struct Certificate {
         // Individual Info
         string candidate_name;
+        string candidtae_email;
+        string candidate_id;
         string course_name;
         string creation_date;
         // Institute Info
@@ -36,6 +38,8 @@ contract Certification {
 
     function generateCertificate(
         string memory _candidate_name,
+        string memory _candidate_email,
+        string memory _candidate_id,
         uint256 _course_index,
         string memory _creation_date
     ) public {
@@ -48,6 +52,8 @@ contract Certification {
         bytes32 certificateId = keccak256(
             abi.encodePacked(
                 _candidate_name,
+                _candidate_email,
+                _candidate_id,
                 _course_index,
                 _creation_date,
                 msg.sender
@@ -76,6 +82,8 @@ contract Certification {
         // Store certificate data
         certificates[certificateId] = Certificate(
             _candidate_name,
+            _candidate_email,
+            _candidate_id,
             _institute_courses[_course_index].course_name,
             _creation_date,
             _institute_name,
@@ -89,6 +97,8 @@ contract Certification {
 
     function getCertificateId(
         string memory _candidate_name,
+        string memory _candidate_email,
+        string memory _candidate_id,
         uint256 _course_index,
         string memory _creation_date,
         address _issuer
@@ -97,6 +107,8 @@ contract Certification {
             keccak256(
                 abi.encodePacked(
                     _candidate_name,
+                    _candidate_email,
+                    _candidate_id,
                     _course_index,
                     _creation_date,
                     _issuer
@@ -116,6 +128,8 @@ contract Certification {
             string memory,
             string memory,
             string memory,
+            string memory,
+            string memory,
             bool
         )
     {
@@ -128,6 +142,8 @@ contract Certification {
 
         return (
             temp.candidate_name,
+            temp.candidtae_email,
+            temp.candidate_id,
             temp.course_name,
             temp.creation_date,
             temp.institute_name,
