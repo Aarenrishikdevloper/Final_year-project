@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Institution from "../../../contracts/Institution.json";
-import Certification from "../../../contracts/Certification.json";
+import Institution from "../../../../../build/contracts/Institution.json";
+// import Certification from "../../../contracts/Certification.json";
+import Certification from "../../../../../build/contracts/Certification.json";
 import Web3 from "web3";
 import {
   TextField,

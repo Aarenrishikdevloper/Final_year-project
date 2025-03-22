@@ -45,7 +45,7 @@ const useStyles = makeStyles((theme) => ({
   menuItemLink: {
     textDecoration: "none", // Remove underline
     color: "inherit", // Inherit text color
-   // Ensure the link behaves as a block element
+    // Ensure the link behaves as a block element
   },
 }));
 
@@ -81,31 +81,32 @@ const NavBar = () => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      
-        <Link href={"/"} className={classes.menuItemLink}>
-          <MenuItem style={{ justifyContent: "flex-end" }}>Home</MenuItem>
-        </Link>
-      
-    
-        <Link href={"/admin"} className={classes.menuItemLink}>
-          <MenuItem style={{ justifyContent: "flex-end" }}>
-            Central Authority Portal
-          </MenuItem>
-        </Link>
-      
-      <Link href="/institute" passHref className={classes.menuItemLink}>
-        
-          <MenuItem style={{ justifyContent: "flex-end" }}>
-            Institute Portal
-          </MenuItem>
-
+      <Link href={"/"} className={classes.menuItemLink}>
+        <MenuItem style={{ justifyContent: "flex-end" }}>Home</MenuItem>
       </Link>
-        
-        <Link href="/view" passHref className={classes.menuItemLink}>
-          <MenuItem style={{ justifyContent: "flex-end" }}>
-            View Certificate
-          </MenuItem>
-        
+
+      <Link href={"/admin"} className={classes.menuItemLink}>
+        <MenuItem style={{ justifyContent: "flex-end" }}>
+          Central Authority Portal
+        </MenuItem>
+      </Link>
+
+      <Link href="/institute" passHref className={classes.menuItemLink}>
+        <MenuItem style={{ justifyContent: "flex-end" }}>
+          Institute Portal
+        </MenuItem>
+      </Link>
+
+      <Link href="/view" passHref className={classes.menuItemLink}>
+        <MenuItem style={{ justifyContent: "flex-end" }}>
+          View Certificate
+        </MenuItem>
+      </Link>
+
+      <Link href="/student" passHref className={classes.menuItemLink}>
+        <MenuItem style={{ justifyContent: "flex-end" }}>
+          Student Login
+        </MenuItem>
       </Link>
     </Menu>
   );
@@ -132,15 +133,13 @@ const NavBar = () => {
       <AppBar position="static" color="white">
         <Toolbar>
           <Link href="/" passHref className={classes.menuItemLink}>
-            
-              <IconButton
-                className={classes.menuButton}
-                color="inherit"
-                aria-label="Icon"
-              >
-                <CertifyIcon color="primary" />
-              </IconButton>
-            
+            <IconButton
+              className={classes.menuButton}
+              color="inherit"
+              aria-label="Icon"
+            >
+              <CertifyIcon color="primary" />
+            </IconButton>
           </Link>
           <Typography
             className={classes.title}
