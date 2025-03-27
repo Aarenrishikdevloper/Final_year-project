@@ -35,7 +35,8 @@ const useStyles = makeStyles((theme) => ({
   },
   certHeader: {
     backgroundColor: "white",
-    background: "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+    background:
+      "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
     padding: "24px",
     borderRadius: "10px 10px 0 0 ",
     fontSize: "24px",
@@ -151,7 +152,8 @@ const Page = () => {
         instituteName: data[5],
         instituteAcronym: data[6],
         instituteLink: data[7],
-        revoked: data[8], // Boolean: true if revoked
+        instituteGovId: data[8],
+        revoked: data[9], // Boolean: true if revoked
       });
       setCertExist(true);
     } catch (error) {
@@ -210,6 +212,7 @@ const Page = () => {
               instituteName={certificateData.instituteName}
               instituteAcronym={certificateData.instituteAcronym}
               institutelink={certificateData.instituteLink}
+              instituteGovId={certificateData.instituteGovId}
               revoked={certificateData.revoked}
               ref={certicateRef}
               logo={
@@ -406,6 +409,7 @@ const Certtificate = forwardRef(
       instituteName,
       instituteAcronym,
       institutelink,
+      instituteGovId,
       revoked,
     },
     ref
@@ -433,7 +437,7 @@ const Certtificate = forwardRef(
                 </Grid>
               </Grid>
               <Grid2 item xs={12} className={classes.certTopSection}>
-              <Grid item>
+                <Grid item>
                   <DetailGroup label={"Email"} content={candidateEmail} />
                   <DetailGroup label={"ID"} content={candidateId} />
                 </Grid>
@@ -460,6 +464,12 @@ const Certtificate = forwardRef(
                   <DetailGroup
                     label={"Institute Link"}
                     content={institutelink}
+                  />
+                </Grid>
+                <Grid item xs={12} lg={6}>
+                  <DetailGroup
+                    label={"Institute Gov ID"}
+                    content={instituteGovId}
                   />
                 </Grid>
               </Grid>

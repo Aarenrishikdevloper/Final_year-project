@@ -3,38 +3,54 @@ pragma solidity >=0.7.0 <0.9.0;
 
 contract StudentContract {
     struct Student {
+        address wallet;
         string email;
-        string candidateId;
-        bytes32 otpHash;
     }
 
-    mapping(string => Student) private students; // candidateId → Student struct
+    mapping(address => Student) private students; // wallet → Student struct
+    mapping(string => address) private emailToWallet; // email → wallet
 
-    event OTPGenerated(string candidateId, bytes32 otpHash);
-    event OTPVerified(string candidateId);
+    event StudentRegistered(address wallet, string email);
 
-    // Register a student
-    function registerStudent(string memory _candidateId, string memory _email) public {
-        require(bytes(students[_candidateId].email).length == 0, "Student already exists");
-        students[_candidateId] = Student(_email, _candidateId, 0);
+    // Student self-registration
+    function registerStudent(string memory _email) public {
+        require(
+            students[msg.sender].wallet == address(0),
+            "Student already registered"
+        );
+        require(
+            emailToWallet[_email] == address(0),
+            "Email already registered"
+        );
+
+        // Store student details
+        students[msg.sender] = Student(msg.sender, _email);
+        emailToWallet[_email] = msg.sender;
+
+        emit StudentRegistered(msg.sender, _email);
     }
 
-    // Generate OTP (frontend must hash OTP before calling this)
-    function generateOTP(string memory _candidateId, bytes32 _otpHash) public {
-        require(bytes(students[_candidateId].email).length != 0, "Student not registered");
-        students[_candidateId].otpHash = _otpHash;
-        emit OTPGenerated(_candidateId, _otpHash);
+    // Fetch student details using wallet address
+    function getStudent(
+        address _wallet
+    ) public view returns (address, string memory) {
+        require(
+            students[_wallet].wallet != address(0),
+            "Student not registered"
+        );
+        return (students[_wallet].wallet, students[_wallet].email);
     }
 
-    // Verify OTP
-    function verifyOTP(string memory _candidateId, string memory _otp) public view returns (bool) {
-        require(bytes(students[_candidateId].email).length != 0, "Student not registered");
-        return keccak256(abi.encodePacked(_otp)) == students[_candidateId].otpHash;
+    // Fetch wallet address using email
+    function getWalletByEmail(
+        string memory _email
+    ) public view returns (address) {
+        require(emailToWallet[_email] != address(0), "Email not registered");
+        return emailToWallet[_email];
     }
 
-    // Get Student Email
-    function getStudentEmail(string memory _candidateId) public view returns (string memory) {
-        require(bytes(students[_candidateId].email).length != 0, "Student not found");
-        return students[_candidateId].email;
+    // Check if wallet is registered
+    function isRegistered(address _wallet) public view returns (bool) {
+        return students[_wallet].wallet != address(0);
     }
 }

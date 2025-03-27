@@ -1,140 +1,3 @@
-// pragma solidity >=0.7.0 <0.9.0;
-// pragma experimental ABIEncoderV2;
-
-// import "./Certification.sol";
-
-// contract Institution {
-//     // State Variables
-//     address public owner;
-
-//     // Mappings
-//     mapping(address => Institute) private institutes; // Institutes Mapping
-//     mapping(address => Course[]) private instituteCourses; // Courses Mapping
-
-//     // Events
-//     event instituteAdded(string _instituteName);
-
-//     constructor() {
-//         owner = msg.sender;
-//     }
-
-//     struct Course {
-//         string course_name;
-//         // Other attributes can be added
-//     }
-
-//     struct Institute {
-//         string institute_name;
-//         string institute_acronym;
-//         string institute_link;
-//     }
-
-//     function stringToBytes32(
-//         string memory source
-//     ) private pure returns (bytes32 result) {
-//         bytes memory tempEmptyStringTest = bytes(source);
-//         if (tempEmptyStringTest.length == 0) {
-//             return 0x0;
-//         }
-//         assembly {
-//             result := mload(add(source, 32))
-//         }
-//     }
-
-//     function addInstitute(
-//         address _address,
-//         string memory _institute_name,
-//         string memory _institute_acronym,
-//         string memory _institute_link,
-//         Course[] memory _institute_courses
-//     ) public returns (bool) {
-//         // Only owner can add institute
-//         require(
-//             msg.sender == owner,
-//             "Caller must be the owner - only owner can add an institute"
-//         );
-//         bytes memory tempEmptyStringNameTest = bytes(
-//             institutes[_address].institute_name
-//         );
-//         require(
-//             tempEmptyStringNameTest.length == 0,
-//             "Institute with token already exists"
-//         );
-//         require(
-//             _institute_courses.length > 0,
-//             "Atleast one course must be added"
-//         );
-//         institutes[_address] = Institute(
-//             _institute_name,
-//             _institute_acronym,
-//             _institute_link
-//         );
-//         for (uint256 i = 0; i < _institute_courses.length; i++) {
-//             instituteCourses[_address].push(_institute_courses[i]);
-//         }
-//         emit instituteAdded(_institute_name);
-//         return true;
-//     }
-
-//     // Called by Institutions
-//     function getInstituteData()
-//         public
-//         view
-//         returns (string memory, string memory, string memory, Course[] memory)
-//     {
-//         Institute memory temp = institutes[msg.sender];
-//         bytes memory tempEmptyStringNameTest = bytes(temp.institute_name);
-//         require(
-//             tempEmptyStringNameTest.length > 0,
-//             "Institute account does not exist!"
-//         );
-//         return (
-//             temp.institute_name,
-//             temp.institute_acronym,
-//             temp.institute_link,
-//             instituteCourses[msg.sender]
-//         );
-//     }
-
-//     // Called by Smart Contracts
-//     function getInstituteData(
-//         address _address
-//     )
-//         public
-//         view
-//         returns (string memory, string memory, string memory, Course[] memory)
-//     {
-//         require(
-//             Certification(msg.sender).owner() == owner,
-//             "Incorrect smart contract & authorizations!"
-//         );
-//         Institute memory temp = institutes[_address];
-//         bytes memory tempEmptyStringNameTest = bytes(temp.institute_name);
-//         require(
-//             tempEmptyStringNameTest.length > 0,
-//             "Institute does not exist!"
-//         );
-//         return (
-//             temp.institute_name,
-//             temp.institute_acronym,
-//             temp.institute_link,
-//             instituteCourses[_address]
-//         );
-//     }
-
-//     function checkInstitutePermission(
-//         address _address
-//     ) public view returns (bool) {
-//         Institute memory temp = institutes[_address];
-//         bytes memory tempEmptyStringNameTest = bytes(temp.institute_name);
-//         if (tempEmptyStringNameTest.length > 0) {
-//             return true;
-//         } else {
-//             return false;
-//         }
-//     }
-// }
-
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.7.0 <0.9.0;
 pragma experimental ABIEncoderV2;
@@ -150,6 +13,7 @@ contract Institution {
     mapping(address => Course[]) private instituteCourses; // Maps account to their courses
     mapping(string => bool) private normalizedNames; // Tracks normalized institute names
     mapping(string => bool) private normalizedAcronyms; // Tracks normalized institute acronyms
+    mapping(string => bool) private governmentIds; // Tracks used government IDs
 
     // Approved Institutes Registry
     struct ApprovedInstitute {
@@ -157,6 +21,7 @@ contract Institution {
         string acronym;
         string normalizedName;
         string normalizedAcronym;
+        string governmentId; // New field: Government-issued ID
     }
     ApprovedInstitute[] public approvedInstitutes;
 
@@ -177,6 +42,7 @@ contract Institution {
         string institute_name;
         string institute_acronym;
         string institute_link;
+        string governmentId; // New field: Government-issued ID
     }
 
     // Modifier to restrict access to the owner
@@ -223,12 +89,19 @@ contract Institution {
         string memory _institute_name,
         string memory _institute_acronym,
         string memory _institute_link,
+        string memory _governmentId, // New parameter: Government ID
         Course[] memory _institute_courses
     ) public onlyOwner returns (bool) {
         // Ensure the account has not already added an institute
         require(
             bytes(institutes[_address].institute_name).length == 0,
             "This account has already added an institute"
+        );
+
+        // Ensure the government ID is unique
+        require(
+            !governmentIds[_governmentId],
+            "An institute with this government ID already exists"
         );
 
         // Normalize the institute name and acronym
@@ -251,19 +124,22 @@ contract Institution {
                 name: _institute_name,
                 acronym: _institute_acronym,
                 normalizedName: normalizedName,
-                normalizedAcronym: normalizedAcronym
+                normalizedAcronym: normalizedAcronym,
+                governmentId: _governmentId // Include governmentId
             })
         );
 
-        // Mark the normalized name and acronym as used
+        // Mark the normalized name, acronym, and government ID as used
         normalizedNames[normalizedName] = true;
         normalizedAcronyms[normalizedAcronym] = true;
+        governmentIds[_governmentId] = true;
 
         // Add the institute to the blockchain
         institutes[_address] = Institute(
             _institute_name,
             _institute_acronym,
-            _institute_link
+            _institute_link,
+            _governmentId // Include governmentId
         );
 
         // Add the courses
@@ -291,7 +167,13 @@ contract Institution {
     function getInstituteData()
         public
         view
-        returns (string memory, string memory, string memory, Course[] memory)
+        returns (
+            string memory,
+            string memory,
+            string memory,
+            string memory, // New return value: governmentId
+            Course[] memory
+        )
     {
         Institute memory temp = institutes[msg.sender];
         bytes memory tempEmptyStringNameTest = bytes(temp.institute_name);
@@ -299,11 +181,21 @@ contract Institution {
             tempEmptyStringNameTest.length > 0,
             "Institute account does not exist!"
         );
+
+        // Copy the storage array into a memory array
+        Course[] memory courses = new Course[](
+            instituteCourses[msg.sender].length
+        );
+        for (uint256 i = 0; i < instituteCourses[msg.sender].length; i++) {
+            courses[i] = instituteCourses[msg.sender][i];
+        }
+
         return (
             temp.institute_name,
             temp.institute_acronym,
             temp.institute_link,
-            instituteCourses[msg.sender]
+            temp.governmentId, // Return governmentId
+            courses
         );
     }
 
@@ -313,7 +205,13 @@ contract Institution {
     )
         public
         view
-        returns (string memory, string memory, string memory, Course[] memory)
+        returns (
+            string memory,
+            string memory,
+            string memory,
+            string memory, // New return value: governmentId
+            Course[] memory
+        )
     {
         require(
             Certification(msg.sender).owner() == owner,
@@ -325,11 +223,21 @@ contract Institution {
             tempEmptyStringNameTest.length > 0,
             "Institute does not exist!"
         );
+
+        // Copy the storage array into a memory array
+        Course[] memory courses = new Course[](
+            instituteCourses[_address].length
+        );
+        for (uint256 i = 0; i < instituteCourses[_address].length; i++) {
+            courses[i] = instituteCourses[_address][i];
+        }
+
         return (
             temp.institute_name,
             temp.institute_acronym,
             temp.institute_link,
-            instituteCourses[_address]
+            temp.governmentId, // Return governmentId
+            courses
         );
     }
 

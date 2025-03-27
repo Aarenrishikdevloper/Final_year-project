@@ -141,6 +141,7 @@ const GenerateCert = () => {
     instituteName: "",
     instituteAcronym: "",
     instituteWebsite: "",
+    governmentId: "",
     instituteCourses: [],
     firstname: "",
     lastname: "",
@@ -193,6 +194,7 @@ const GenerateCert = () => {
     let networkId;
     try {
       networkId = await web3.eth.net.getId();
+      console.log("Network ID", networkId);
     } catch (err) {
       toast.warning(
         "❕ Please make sure you are connected to the correct network"
@@ -227,7 +229,7 @@ const GenerateCert = () => {
       const res = await institution.methods
         .getInstituteData()
         .call({ from: caller });
-      const formattedInstituteCoursesData = res[3].map((x) => ({
+      const formattedInstituteCoursesData = res[4].map((x) => ({
         course_name: x.course_name,
       }));
 
@@ -236,6 +238,7 @@ const GenerateCert = () => {
         instituteName: res[0],
         instituteAcronym: res[1],
         instituteWebsite: res[2],
+        governmentId: res[3],
         instituteCourses: formattedInstituteCoursesData,
         isLegitInstitute: true,
         renderLoading: false,
@@ -391,6 +394,7 @@ const GenerateCert = () => {
     instituteName,
     instituteAcronym,
     instituteWebsite,
+    governmentId,
     instituteCourses,
     isLegitInstitute,
     firstname,
@@ -497,6 +501,17 @@ const GenerateCert = () => {
                       label="Institute Website"
                       sx={useStyles.instituteField}
                       value={instituteWebsite}
+                      margin="normal"
+                      variant="outlined"
+                      InputProps={{ readOnly: true }}
+                    />
+                    <TextField
+                      required
+                      disabled
+                      id="government-id"
+                      label="Government ID"
+                      sx={useStyles.instituteField}
+                      value={governmentId}
                       margin="normal"
                       variant="outlined"
                       InputProps={{ readOnly: true }}

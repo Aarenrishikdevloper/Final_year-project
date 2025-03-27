@@ -12,8 +12,19 @@ contract Certification {
     // Mappings
     mapping(bytes32 => Certificate) private certificates;
 
+    // New mapping to track certificates by email
+    mapping(string => bytes32[]) private emailToCertificateIds;
+
     // Events
-    event CertificateGenerated(bytes32 certificateId);
+    event CertificateGenerated(
+        bytes32 certificateId,
+        string indexed candidate_email,
+        string candidate_name,
+        string course_name,
+        string creation_date,
+        string institute_Name,
+        bool revoked
+    );
     event CertificateRevoked(bytes32 certificateId);
 
     constructor(Institution _institution) {
@@ -24,7 +35,7 @@ contract Certification {
     struct Certificate {
         // Individual Info
         string candidate_name;
-        string candidtae_email;
+        string candidate_email;
         string candidate_id;
         string course_name;
         string creation_date;
@@ -32,6 +43,7 @@ contract Certification {
         string institute_name;
         string institute_acronym;
         string institute_link;
+        string governmentId; // New field: Government ID
         // Revocation status
         bool revoked;
     }
@@ -71,6 +83,7 @@ contract Certification {
             string memory _institute_name,
             string memory _institute_acronym,
             string memory _institute_link,
+            string memory _governmentId, // New field: Government ID
             Institution.Course[] memory _institute_courses
         ) = institution.getInstituteData(msg.sender);
 
@@ -89,10 +102,49 @@ contract Certification {
             _institute_name,
             _institute_acronym,
             _institute_link,
+            _governmentId, // Include governmentId
             false // Not revoked
         );
+        //new function
+        emailToCertificateIds[_candidate_email].push(certificateId);
 
-        emit CertificateGenerated(certificateId);
+        emit CertificateGenerated(
+            certificateId,
+            _candidate_email,
+            _candidate_name,
+            _institute_courses[_course_index].course_name,
+            _creation_date,
+            _institute_name,
+            false
+        );
+    }
+
+    //get certificate by email
+    function getCertificatesByEmail(
+        string memory _email
+    )
+        public
+        view
+        returns (
+            bytes32[] memory ids,
+            string[] memory courseNames,
+            string[] memory issueDates,
+            bool[] memory revokedStatuses
+        )
+    {
+        ids = emailToCertificateIds[_email];
+        uint256 count = ids.length;
+
+        courseNames = new string[](count);
+        issueDates = new string[](count);
+        revokedStatuses = new bool[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            Certificate storage cert = certificates[ids[i]];
+            courseNames[i] = cert.course_name;
+            issueDates[i] = cert.creation_date;
+            revokedStatuses[i] = cert.revoked;
+        }
     }
 
     function getCertificateId(
@@ -130,6 +182,7 @@ contract Certification {
             string memory,
             string memory,
             string memory,
+            string memory, // New field: Government ID
             bool
         )
     {
@@ -142,16 +195,24 @@ contract Certification {
 
         return (
             temp.candidate_name,
-            temp.candidtae_email,
+            temp.candidate_email,
             temp.candidate_id,
             temp.course_name,
             temp.creation_date,
             temp.institute_name,
             temp.institute_acronym,
             temp.institute_link,
+            temp.governmentId, // Return governmentId
             temp.revoked
         );
     }
+
+    //getting certificates by email
+    // function getCertificateIdsByEmail(
+    //     string memory _email
+    // ) public view returns (bytes32[] memory) {
+    //     return emailToCertificateIds[_email];
+    // }
 
     function revokeCertificate(bytes32 certificateId) public {
         require(

@@ -85,6 +85,7 @@ const Page = () => {
   const [instituteName, setInstituteName] = useState("");
   const [instituteAcronym, setInstituteAcronym] = useState("");
   const [instituteWebsite, setInstituteWebsite] = useState("");
+  const [governmentId, setGovernmentId] = useState("");
   const [courseName, setCourseName] = useState("");
   const [courses, setCourses] = useState([]); // Store list of courses
   const [open, setOpen] = useState(false);
@@ -167,6 +168,7 @@ const Page = () => {
       !instituteName ||
       !instituteAcronym ||
       !instituteWebsite ||
+      !governmentId ||
       courses.length === 0
     ) {
       toast.error("Please fill out all fields and add at least one course.");
@@ -192,6 +194,7 @@ const Page = () => {
         instituteName,
         instituteAcronym,
         instituteWebsite,
+        governmentId,
         formattedCourses,
       });
 
@@ -201,6 +204,7 @@ const Page = () => {
           instituteName,
           instituteAcronym,
           instituteWebsite,
+          governmentId,
           formattedCourses
         )
         .send({ from: account });
@@ -210,6 +214,7 @@ const Page = () => {
       setInstituteAddress("");
       setInstituteAcronym("");
       setInstituteWebsite("");
+      setGovernmentId("");
       setCourses([]);
     } catch (error) {
       console.error("Error adding institute:", error);
@@ -358,6 +363,26 @@ const Page = () => {
                     type="name"
                     value={instituteWebsite}
                     onChange={(e) => setInstituteWebsite(e.target.value)}
+                    autoFocus
+                  />
+                </FormControl>
+                <FormControl
+                  margin="normal"
+                  style={{
+                    width: "95%",
+                    marginLeft: "10px",
+                    marginRight: "10px",
+                  }}
+                >
+                  <InputLabel htmlFor="address">
+                    Institute GovernmentID
+                  </InputLabel>
+                  <Input
+                    id="address"
+                    label="Institute GovernmentID"
+                    type="name"
+                    value={governmentId}
+                    onChange={(e) => setGovernmentId(e.target.value)}
                     autoFocus
                   />
                 </FormControl>
