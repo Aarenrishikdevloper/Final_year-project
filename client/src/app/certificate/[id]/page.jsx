@@ -153,7 +153,7 @@ const Page = () => {
         instituteAcronym: data[6],
         instituteLink: data[7],
         instituteGovId: data[8],
-        revoked: data[9], // Boolean: true if revoked
+        revoked: data[9],
       });
       setCertExist(true);
     } catch (error) {
@@ -215,9 +215,6 @@ const Page = () => {
               instituteGovId={certificateData.instituteGovId}
               revoked={certificateData.revoked}
               ref={certicateRef}
-              logo={
-                "https://www.bing.com/images/search?q=kaziranga%20university%20logo&FORM=IQFRBA&id=B5A8EB5155D2D93064F4E758F1A7C89A82CD6627"
-              }
             />
           )}
           {!loading && certExist && certificateData && (

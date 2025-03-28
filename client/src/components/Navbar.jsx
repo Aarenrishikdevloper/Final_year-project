@@ -9,7 +9,7 @@ import Menu from "@mui/material/Menu";
 import { makeStyles } from "@mui/styles";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import { default as CertifyIcon } from "@mui/icons-material/AccountBalanceWalletTwoTone";
-import LinkIcon from "@mui/icons-material/Link";
+import MenuIcon from "@mui/icons-material/Menu"; // Changed from LinkIcon
 import Link from "next/link";
 
 const useStyles = makeStyles((theme) => ({
@@ -43,9 +43,8 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   menuItemLink: {
-    textDecoration: "none", // Remove underline
-    color: "inherit", // Inherit text color
-    // Ensure the link behaves as a block element
+    textDecoration: "none",
+    color: "inherit",
   },
 }));
 
@@ -157,7 +156,7 @@ const NavBar = () => {
               onClick={handleProfileMenuOpen}
               color="inherit"
             >
-              <LinkIcon />
+              <MenuIcon /> {/* Changed to menu icon */}
             </IconButton>
           </div>
           <div className={classes.sectionMobile}>
@@ -166,7 +165,7 @@ const NavBar = () => {
               onClick={handleMobileMenuOpen}
               color="inherit"
             >
-              <LinkIcon />
+              <MenuIcon /> {/* Changed to menu icon */}
             </IconButton>
           </div>
         </Toolbar>

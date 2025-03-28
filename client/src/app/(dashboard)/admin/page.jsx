@@ -18,10 +18,17 @@ import {
   DialogContentText,
   DialogActions,
   CircularProgress,
+  Alert,
+  Container,
+  Avatar,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Divider,
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
+import { styled } from "@mui/material/styles";
 import React, { useState, useEffect } from "react";
-import { Error } from "@/components/Error"; // Ensure this path is correct
 import AddCircleOutline from "@mui/icons-material/AddCircleOutline";
 import NavBar from "@/components/Navbar";
 import { Delete } from "@mui/icons-material";
@@ -31,51 +38,43 @@ import toast from "react-hot-toast";
 import Web3 from "web3";
 import InstitutionABI from "../../../../../build/contracts/Institution.json";
 
-// Replace makeStyles with styled
-const useStyles = makeStyles((theme) => ({
-  container: {
-    display: "flex",
-  },
-  paper: {
-    [theme.breakpoints.up("sm")]: {
-      borderRadius: "5%",
-      marginRight: 30,
-    },
-    [theme.breakpoints.up(1150)]: {
-      marginLeft: 50,
-      width: 700,
-    },
-    height: "100%",
-    marginTop: theme.spacing.unit * 6,
-    marginBottom: "40px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 3}px ${
-      theme.spacing.unit * 3
-    }px`,
-  },
-  form: {
-    width: "100%", // Fix IE 11 issue.
-  },
-  submit: {
-    marginTop: theme.spacing.unit * 3,
-    width: "95%",
-    marginLeft: "10px",
-    marginRight: "10px",
-  },
-  courseItem: {
-    width: "95%",
-    background: "#73737312",
-    borderRadius: "100px",
-    marginBottom: "10px",
-    paddingLeft: "25px",
-    border: "1px solid #d8d8d8",
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius,
+  margin: theme.spacing(2, "auto"),
+  padding: theme.spacing(4),
+  maxWidth: 800,
+  [theme.breakpoints.up("sm")]: {
+    borderRadius: theme.shape.borderRadius * 2,
   },
 }));
 
+const GradientText = styled(Typography)(({ theme }) => ({
+  background:
+    "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  fontWeight: "bold",
+  margin: theme.spacing(4, 0, 2),
+  textAlign: "center",
+}));
+
+const SubmitButton = styled(Button)(({ theme }) => ({
+  background:
+    "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+  borderRadius: theme.shape.borderRadius,
+  padding: theme.spacing(1.5),
+  marginTop: theme.spacing(3),
+}));
+
+const CourseItem = styled(ListItem)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[100],
+  borderRadius: theme.shape.borderRadius * 3,
+  marginBottom: theme.spacing(1),
+  paddingLeft: theme.spacing(3),
+  border: `1px solid ${theme.palette.grey[300]}`,
+}));
+
 const Page = () => {
-  const classes = useStyles();
   const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState("");
   const [contract, setContract] = useState(null);
@@ -87,15 +86,13 @@ const Page = () => {
   const [instituteWebsite, setInstituteWebsite] = useState("");
   const [governmentId, setGovernmentId] = useState("");
   const [courseName, setCourseName] = useState("");
-  const [courses, setCourses] = useState([]); // Store list of courses
+  const [courses, setCourses] = useState([]);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
 
-  // Check if the selected account matches the expected address
   const checkSelectedAccount = async (expectedAddress) => {
     const accounts = await web3.eth.getAccounts();
-    const selectedAccount = accounts[0]; // Currently selected account in MetaMask
-
+    const selectedAccount = accounts[0];
     if (selectedAccount.toLowerCase() !== expectedAddress.toLowerCase()) {
       toast.error(
         `Please switch to the correct account (${expectedAddress}) in MetaMask to proceed.`
@@ -105,7 +102,6 @@ const Page = () => {
     return true;
   };
 
-  // Initialize blockchain connection
   useEffect(() => {
     async function connectBlockchain() {
       try {
@@ -140,7 +136,6 @@ const Page = () => {
           deployedNetwork.address
         );
 
-        // Check if the connected account is the contract owner
         const owner = await contractInstance.methods.owner().call();
         setIsAdmin(accounts[0] === owner);
         setContract(contractInstance);
@@ -154,7 +149,6 @@ const Page = () => {
     connectBlockchain();
   }, []);
 
-  // Add Institute to Blockchain
   const handleAddInstitute = async (event) => {
     event.preventDefault();
     if (!web3 || !contract) {
@@ -162,7 +156,6 @@ const Page = () => {
       return;
     }
 
-    // Basic form validation
     if (
       !instituteAddress ||
       !instituteName ||
@@ -177,8 +170,6 @@ const Page = () => {
 
     try {
       setLoading(true);
-
-      // Check if the correct account is selected
       const isCorrectAccount = await checkSelectedAccount(account);
       if (!isCorrectAccount) {
         setLoading(false);
@@ -188,15 +179,6 @@ const Page = () => {
       const formattedCourses = courses.map((course) => ({
         course_name: course,
       }));
-
-      console.log("Sending Transaction:", {
-        instituteAddress,
-        instituteName,
-        instituteAcronym,
-        instituteWebsite,
-        governmentId,
-        formattedCourses,
-      });
 
       await contract.methods
         .addInstitute(
@@ -218,12 +200,9 @@ const Page = () => {
       setCourses([]);
     } catch (error) {
       console.error("Error adding institute:", error);
-
-      // Parse and display smart contract errors
       if (error.code === 4001) {
         toast.error("Transaction rejected by the user.");
       } else if (error.message.includes("revert")) {
-        // Extract the error message from the revert reason
         const revertReason =
           error.message.match(/revert\s+(.*)/)?.[1] || "Transaction failed.";
         toast.error(`Transaction failed: ${revertReason}`);
@@ -235,284 +214,255 @@ const Page = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Container
+        maxWidth="md"
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Box textAlign="center">
+          <CircularProgress size={60} />
+          <Typography variant="h6" sx={{ mt: 3 }}>
+            Connecting to Blockchain...
+          </Typography>
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <NavBar />
+        <Container maxWidth="md" sx={{ mt: 4 }}>
+          <Alert severity="error" sx={{ mb: 3 }}>
+            <Typography variant="h6">{error}</Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              You could download Metamask on this browser or use another
+              Ethereum-based browser
+            </Typography>
+          </Alert>
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            onClick={() => window.location.reload()}
+          >
+            Done
+          </Button>
+        </Container>
+      </>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <>
+        <NavBar />
+        <Container maxWidth="md" sx={{ mt: 4 }}>
+          <Card sx={{ p: 3, textAlign: "center" }}>
+            <Avatar
+              sx={{
+                bgcolor: "error.main",
+                width: 56,
+                height: 56,
+                margin: "0 auto 16px",
+              }}
+            >
+              <Delete fontSize="large" />
+            </Avatar>
+            <Typography variant="h4" color="error" gutterBottom>
+              Unauthorized Access
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Only the contract owner can register institutes.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Please connect with the administrator account to access this page.
+            </Typography>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => window.location.reload()}
+            >
+              OK
+            </Button>
+          </Card>
+        </Container>
+      </>
+    );
+  }
+
   return (
     <>
-      {!loading && <NavBar />}
-      {loading ? (
-        <p>Connecting to Blockchain...</p>
-      ) : error ? (
-        <Error
-          message={error}
-          label="You could download Metamask on this browser or use another Ethereum-based browser"
-          buttonText="Done"
-        />
-      ) : isAdmin ? (
-        <>
-          <Typography
-            variant="h4"
-            color="primary"
-            align="center"
-            style={{
-              marginTop: "30px",
-              marginBottom: "30px",
-              background:
-                "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontWeight: "bold",
-            }}
-          >
-            Welcome, Blockchain Admin
-          </Typography>
+      <NavBar />
+      <Container maxWidth="lg">
+        <GradientText variant="h4">Welcome, Blockchain Admin</GradientText>
 
-          <Grid container style={{ height: "100%", justifyContent: "center" }}>
-            <Paper className={classes.paper}>
-              <Card
-                style={{
-                  minWidth: "250px",
-                  minHeight: "70px",
-                  marginTop: "10px",
-                }}
-              >
-                <CardContent
-                  style={{
-                    textAlign: "center",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Typography variant="h5" color="rgb(19, 15, 77)">
-                    Institute Registration
-                  </Typography>
-                </CardContent>
-              </Card>
-              <Box m={1} />
+        <StyledPaper elevation={3}>
+          <Card sx={{ mb: 3 }}>
+            <CardContent sx={{ textAlign: "center" }}>
+              <Typography variant="h5" color="primary">
+                Institute Registration
+              </Typography>
+            </CardContent>
+          </Card>
 
-              <form className={classes.form}>
-                <FormControl
-                  margin="normal"
-                  style={{
-                    width: "95%",
-                    marginLeft: "10px",
-                    marginRight: "10px",
-                  }}
-                >
-                  <InputLabel htmlFor="address">
-                    Institute Account Address
-                  </InputLabel>
-                  <Input
-                    id="address"
-                    label="Institute Account Address"
-                    type="name"
-                    value={instituteAddress}
-                    onChange={(e) => setInstituteAddress(e.target.value)}
-                    autoFocus
-                  />
-                </FormControl>
-                <FormControl
-                  margin="normal"
-                  style={{
-                    width: "95%",
-                    marginLeft: "10px",
-                    marginRight: "10px",
-                  }}
-                >
-                  <InputLabel htmlFor="address">Institute Name</InputLabel>
-                  <Input
-                    id="address"
-                    label="Institute Name"
-                    type="name"
-                    value={instituteName}
-                    onChange={(e) => setInstituteName(e.target.value)}
-                    autoFocus
-                  />
-                </FormControl>
-
-                <FormControl
-                  margin="normal"
-                  style={{
-                    width: "95%",
-                    marginLeft: "10px",
-                    marginRight: "10px",
-                  }}
-                >
-                  <InputLabel htmlFor="address">Institute Acronym</InputLabel>
-                  <Input
-                    id="address"
-                    label="Institute Acronym"
-                    type="name"
-                    value={instituteAcronym}
-                    onChange={(e) => setInstituteAcronym(e.target.value)}
-                    autoFocus
-                  />
-                </FormControl>
-                <FormControl
-                  margin="normal"
-                  style={{
-                    width: "95%",
-                    marginLeft: "10px",
-                    marginRight: "10px",
-                  }}
-                >
-                  <InputLabel htmlFor="address">
-                    Institute Website Link
-                  </InputLabel>
-                  <Input
-                    id="address"
-                    label="Institute Website"
-                    type="name"
-                    value={instituteWebsite}
-                    onChange={(e) => setInstituteWebsite(e.target.value)}
-                    autoFocus
-                  />
-                </FormControl>
-                <FormControl
-                  margin="normal"
-                  style={{
-                    width: "95%",
-                    marginLeft: "10px",
-                    marginRight: "10px",
-                  }}
-                >
-                  <InputLabel htmlFor="address">
-                    Institute GovernmentID
-                  </InputLabel>
-                  <Input
-                    id="address"
-                    label="Institute GovernmentID"
-                    type="name"
-                    value={governmentId}
-                    onChange={(e) => setGovernmentId(e.target.value)}
-                    autoFocus
-                  />
-                </FormControl>
-                <Box m={3} />
-                <Box
-                  display={"flex"}
-                  justifyContent={"space-between"}
-                  alignContent={"center"}
-                >
-                  <Typography
-                    variant="h6"
-                    style={{
-                      alignSelf: "flex-start",
-                      marginBottom: "-10px",
-                      marginLeft: "10px",
-                    }}
-                  >
-                    Courses
-                  </Typography>
-                  <IconButton color="primary" onClick={() => setOpen(true)}>
-                    <AddCircleOutline />
-                  </IconButton>
-                </Box>
-
-                {/* Add courses DialogBox */}
-                <Dialog
-                  open={open}
-                  onClose={() => setOpen(false)}
-                  aria-label="form-dialog-title"
-                >
-                  <DialogTitle id="from-dialog-title">
-                    Add an Institute Course
-                  </DialogTitle>
-                  <DialogContent>
-                    <DialogContentText>
-                      After adding this course, this course will be one of the
-                      choices of courses available for selection in certificate
-                      generation.
-                    </DialogContentText>
-
-                    <TextField
-                      id="address"
-                      label="Course name"
-                      type="name"
-                      autoFocus
-                      value={courseName}
-                      onChange={(e) => setCourseName(e.target.value)}
-                      style={{
-                        width: "95%",
-                        marginLeft: "10px",
-                        marginRight: "10px",
-                        marginTop: "20px",
-                      }}
-                    />
-                  </DialogContent>
-                  <DialogActions>
-                    <Button
-                      color="primary"
-                      variant="outlined"
-                      onClick={() => setOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      color="primary"
-                      variant="contained"
-                      onClick={() => {
-                        if (courseName.trim() !== "") {
-                          setCourses([...courses, courseName]); // Add course to list
-                          setCourseName(""); // Clear input field
-                          setOpen(false);
-                        }
-                      }}
-                    >
-                      Submit
-                    </Button>
-                  </DialogActions>
-                </Dialog>
-
-                {/* Display Courses */}
-                {courses.map((course, index) => (
-                  <Box
-                    key={index}
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    className={classes.courseItem}
-                    style={{ marginLeft: "10px", marginRight: "10px" }}
-                  >
-                    <Typography>{course}</Typography>
-                    <IconButton
-                      color="primary"
-                      onClick={() =>
-                        setCourses(courses.filter((_, i) => i !== index))
-                      }
-                    >
-                      <Delete />
-                    </IconButton>
-                  </Box>
-                ))}
-
-                <Box m={1.5} />
-                <Button
-                  onClick={handleAddInstitute}
-                  // type="submit"
+          <Box component="form" onSubmit={handleAddInstitute}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
                   fullWidth
-                  variant="contained"
-                  disabled={loading}
-                  style={{
-                    background:
-                      "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
-                    WebkitBorderBottomLeftRadius: "25px",
-                    WebkitBorderBottomRightRadius: "25px",
+                  label="Institute Account Address"
+                  value={instituteAddress}
+                  onChange={(e) => setInstituteAddress(e.target.value)}
+                  required
+                  margin="normal"
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Institute Name"
+                  value={instituteName}
+                  onChange={(e) => setInstituteName(e.target.value)}
+                  required
+                  margin="normal"
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Institute Acronym"
+                  value={instituteAcronym}
+                  onChange={(e) => setInstituteAcronym(e.target.value)}
+                  required
+                  margin="normal"
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Institute Website Link"
+                  value={instituteWebsite}
+                  onChange={(e) => setInstituteWebsite(e.target.value)}
+                  required
+                  margin="normal"
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Institute Government ID"
+                  value={governmentId}
+                  onChange={(e) => setGovernmentId(e.target.value)}
+                  required
+                  margin="normal"
+                  variant="outlined"
+                />
+              </Grid>
+            </Grid>
+
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Typography variant="h6">Courses</Typography>
+              <Button
+                startIcon={<AddCircleOutline />}
+                onClick={() => setOpen(true)}
+                variant="outlined"
+              >
+                Add Course
+              </Button>
+            </Box>
+
+            <Dialog open={open} onClose={() => setOpen(false)}>
+              <DialogTitle>Add an Institute Course</DialogTitle>
+              <DialogContent>
+                <DialogContentText>
+                  After adding this course, it will be available for selection
+                  in certificate generation.
+                </DialogContentText>
+                <TextField
+                  autoFocus
+                  margin="dense"
+                  label="Course name"
+                  fullWidth
+                  value={courseName}
+                  onChange={(e) => setCourseName(e.target.value)}
+                  sx={{ mt: 2 }}
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpen(false)}>Cancel</Button>
+                <Button
+                  onClick={() => {
+                    if (courseName.trim() !== "") {
+                      setCourses([...courses, courseName]);
+                      setCourseName("");
+                      setOpen(false);
+                    }
                   }}
-                  className={classes.submit}
+                  variant="contained"
                 >
-                  {loading ? <CircularProgress size={24} /> : "Add Institute"}
+                  Submit
                 </Button>
-                <Box m={2} />
-              </form>
-            </Paper>
-          </Grid>
-        </>
-      ) : (
-        <Error
-          message="Unauthorized"
-          label="Only the contract owner can register institutes."
-          buttonText="OK"
-        />
-      )}
+              </DialogActions>
+            </Dialog>
+
+            <List sx={{ mt: 2 }}>
+              {courses.map((course, index) => (
+                <React.Fragment key={index}>
+                  <CourseItem>
+                    <ListItemText primary={course} />
+                    <ListItemSecondaryAction>
+                      <IconButton
+                        edge="end"
+                        onClick={() =>
+                          setCourses(courses.filter((_, i) => i !== index))
+                        }
+                      >
+                        <Delete color="error" />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </CourseItem>
+                  {index < courses.length - 1 && <Divider />}
+                </React.Fragment>
+              ))}
+            </List>
+
+            <SubmitButton
+              type="submit"
+              fullWidth
+              variant="contained"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <CircularProgress size={24} sx={{ mr: 1 }} />
+                  Adding Institute...
+                </>
+              ) : (
+                "Add Institute"
+              )}
+            </SubmitButton>
+          </Box>
+        </StyledPaper>
+      </Container>
     </>
   );
 };

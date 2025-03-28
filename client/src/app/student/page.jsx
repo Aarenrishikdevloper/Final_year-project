@@ -21,6 +21,7 @@ import {
   CardContent,
   Link,
   Alert,
+  Grid2,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
@@ -442,8 +443,13 @@ export default function StudentProfile() {
             MetaMask.
           </Typography>
           <Button
-            variant="contained"
-            color="primary"
+            // variant="contained"
+            // color="primary"
+            sx={{
+              background:
+                "linear-gradient(124deg, rgb(129, 255, 228) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+              color: "white",
+            }}
             href="https://metamask.io/"
             target="_blank"
             rel="noopener noreferrer"
@@ -467,8 +473,13 @@ export default function StudentProfile() {
             Please connect to the correct Ethereum network.
           </Typography>
           <Button
-            variant="contained"
-            color="primary"
+            // variant="contained"
+            // color="primary"
+            sx={{
+              background:
+                "linear-gradient(124deg, rgb(129, 255, 228) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+              color: "white",
+            }}
             onClick={() => window.location.reload()}
           >
             Try Again
@@ -490,8 +501,13 @@ export default function StudentProfile() {
             {error}
           </Alert>
           <Button
-            variant="contained"
-            color="primary"
+            // variant="contained"
+            // color="primary"
+            sx={{
+              background:
+                "linear-gradient(124deg, rgb(129, 255, 228) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+              color: "white",
+            }}
             onClick={() => window.location.reload()}
           >
             Try Again
@@ -515,8 +531,13 @@ export default function StudentProfile() {
             </Typography>
           </NetworkIndicator>
           <Button
-            variant="contained"
-            color="primary"
+            // variant="contained"
+            // color="primary"
+            sx={{
+              background:
+                "linear-gradient(124deg, rgb(129, 255, 228) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+              color: "white",
+            }}
             onClick={connectWallet}
             disabled={loading.data}
             size="large"
@@ -602,16 +623,27 @@ export default function StudentProfile() {
               />
               <Button
                 type="submit"
-                variant="contained"
-                color="primary"
                 disabled={loading.registration}
                 size="large"
-                sx={{ mt: 2 }}
+                sx={{
+                  mt: 2,
+                  background:
+                    "linear-gradient(124deg, rgb(129, 255, 228) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+                  color: "white",
+                }}
                 fullWidth
               >
                 {loading.registration ? (
                   <>
-                    <CircularProgress size={24} sx={{ mr: 1 }} />
+                    <CircularProgress
+                      size={24}
+                      sx={{
+                        mr: 1,
+                        background:
+                          "linear-gradient(124deg, rgb(129, 255, 228) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+                        color: "white",
+                      }}
+                    />
                     Registering...
                   </>
                 ) : (

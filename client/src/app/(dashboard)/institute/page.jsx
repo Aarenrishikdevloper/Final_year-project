@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Institution from "../../../../../build/contracts/Institution.json";
-// import Certification from "../../../contracts/Certification.json";
 import Certification from "../../../../../build/contracts/Certification.json";
 import Web3 from "web3";
 import {
@@ -20,6 +19,13 @@ import {
   Tabs,
   Tab,
   styled,
+  Container,
+  Alert,
+  Avatar,
+  Card,
+  CardContent,
+  MenuItem,
+  Chip,
 } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -27,109 +33,55 @@ import {
   OpenInNewOutlined,
   FileCopyOutlined,
   LoopOutlined,
+  Warning,
+  Error as ErrorIcon,
+  CheckCircle,
 } from "@mui/icons-material";
 import { encrypt } from "../../../utils/encrypt.js";
-// import { useRouter } from "next/router";
 import NavBar from "@/components/Navbar";
-// import Button from "@/components/SubmitApplication";
 
 // Styled Components
-const StyledTabs = styled(Tabs)({
+const StyledTabs = styled(Tabs)(({ theme }) => ({
   "& .MuiTabs-indicator": {
-    backgroundColor: "#b09ce8",
-    height: "3px",
-  },
-});
-
-const StyledTab = styled(Tab)(({ theme }) => ({
-  color: "white",
-  opacity: 1,
-  fontSize: "20px",
-  padding: "10px",
-  "&.Mui-selected": {
-    opacity: 1,
+    backgroundColor: theme.palette.primary.main,
+    height: 3,
   },
 }));
 
-// Styles
-const useStyles = {
-  appbar: {
-    background:
-      "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+const StyledTab = styled(Tab)(({ theme }) => ({
+  color: theme.palette.common.white,
+  opacity: 1,
+  fontSize: "1rem",
+  padding: theme.spacing(1.5),
+  "&.Mui-selected": {
+    color: theme.palette.common.white,
   },
-  tabPanel: {
-    height: "100%",
-    overflowY: "scroll",
-    marginBottom: "2vh",
+}));
+
+const GradientText = styled(Typography)(({ theme }) => ({
+  background:
+    "linear-gradient(124deg, rgb(13, 37, 117) 0%, rgb(21, 192, 155) 100%)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  fontWeight: "bold",
+  margin: theme.spacing(4, 0, 2),
+  textAlign: "center",
+}));
+
+const FormPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  margin: theme.spacing(4, "auto"),
+  maxWidth: 800,
+  [theme.breakpoints.down("sm")]: {
+    padding: theme.spacing(2),
+    margin: theme.spacing(2),
   },
-  container: {
-    display: "flex",
-    flexWrap: "wrap",
-  },
-  formControl: {
-    margin: "8px",
-    minWidth: 520,
-  },
-  textField: {
-    marginLeft: "8px",
-    marginRight: "8px",
-    width: 250,
-    "@media (max-width: 600px)": {
-      width: 200,
-    },
-  },
-  instituteField: {
-    marginLeft: "8px",
-    marginRight: "8px",
-    width: 520,
-    "@media (max-width: 600px)": {
-      width: 200,
-    },
-  },
-  paper: {
-    minHeight: "75vh",
-    maxWidth: "95%",
-    margin: "40px",
-    display: "flex",
-    flexDirection: "column",
-    padding: "32px 64px 24px",
-    marginTop: "20px",
-    "@media (max-width: 600px)": {
-      margin: "8px",
-      padding: "16px",
-    },
-  },
-  rightpaper: {
-    maxWidth: "60%",
-    minWidth: "60%",
-    margin: "40px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "16px 24px 24px",
-    "@media (max-width: 600px)": {
-      maxWidth: "95%",
-      margin: "16px",
-    },
-  },
-  verificationBox: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyItems: "center",
-    height: "100%",
-    marginTop: "24px",
-  },
-  courseField: {
-    width: "60%",
-    "@media (max-width: 600px)": {
-      minWidth: "80vw",
-    },
-  },
-  submitBtn: {
-    marginLeft: "50px",
-  },
-};
+}));
+
+const SubmitButton = styled(Button)(({ theme }) => ({
+  margin: theme.spacing(3, 0, 2),
+  padding: theme.spacing(1.5),
+}));
 
 const GenerateCert = () => {
   const [state, setState] = useState({
@@ -174,7 +126,7 @@ const GenerateCert = () => {
       checkAddressAndGetCourses();
     } else {
       toast.warning(
-        "❕ Non-Ethereum browser detected. You should consider trying MetaMask!"
+        "Non-Ethereum browser detected. You should consider trying MetaMask!"
       );
       setState((prev) => ({
         ...prev,
@@ -194,10 +146,9 @@ const GenerateCert = () => {
     let networkId;
     try {
       networkId = await web3.eth.net.getId();
-      console.log("Network ID", networkId);
     } catch (err) {
       toast.warning(
-        "❕ Please make sure you are connected to the correct network"
+        "Please make sure you are connected to the correct network"
       );
       setState((prev) => ({
         ...prev,
@@ -209,7 +160,7 @@ const GenerateCert = () => {
 
     if (!(networkId in Institution.networks)) {
       toast.warning(
-        "❕ Please make sure you are connected to the correct network"
+        "Please make sure you are connected to the correct network"
       );
       setState((prev) => ({
         ...prev,
@@ -244,7 +195,7 @@ const GenerateCert = () => {
         renderLoading: false,
       }));
     } catch (error) {
-      toast.warning("❕ You are not authorized to access this page");
+      toast.warning("You are not authorized to access this page");
       setState((prev) => ({
         ...prev,
         isLegitInstitute: false,
@@ -288,14 +239,6 @@ const GenerateCert = () => {
       const encryptionKey = "your-secret-key";
       const encryptedDate = encrypt(creationDateString, encryptionKey);
 
-      // Debugging Parameters
-      console.log("Debugging Parameters:");
-      console.log("Candidate Name:", candidateName);
-      console.log("Candidate Email:", candidateEmail);
-      console.log("Candidate ID:", candidateId);
-      console.log("Course Index:", courseIndex);
-      console.log("Encrypted Date:", encryptedDate);
-
       const transaction = await certification.methods
         .generateCertificate(
           candidateName,
@@ -315,7 +258,7 @@ const GenerateCert = () => {
           certificateId: certificateId,
           txnFailed: false,
         }));
-        toast.success("✅ Successfully generated certificate!");
+        toast.success("Successfully generated certificate!");
       } else {
         throw new Error("CertificateGenerated event not found.");
       }
@@ -329,10 +272,10 @@ const GenerateCert = () => {
 
       if (error.code === -32603) {
         toast.error(
-          "❌ Transaction failed. Please check that you have set enough gas limit."
+          "Transaction failed. Please check that you have set enough gas limit."
         );
       } else if (error.code === 4001) {
-        toast.error("❌ Transaction rejected!");
+        toast.error("Transaction rejected!");
       }
     }
   };
@@ -359,7 +302,7 @@ const GenerateCert = () => {
         .revokeCertificate(revokeCertificateId)
         .send({ from: caller, gas: 2100000 });
 
-      toast.success("✅ Successfully revoked certificate!");
+      toast.success("Successfully revoked certificate!");
       setState((prev) => ({
         ...prev,
         revokeCurrentState: "validate",
@@ -375,10 +318,10 @@ const GenerateCert = () => {
 
       if (error.code === -32603) {
         toast.error(
-          "❌ Revocation Transaction failed. Please check that certificate id exists and you have set enough gas limit."
+          "Revocation Transaction failed. Please check that certificate id exists and you have set enough gas limit."
         );
       } else if (error.code === 4001) {
-        toast.error("❌ Revocation Transaction rejected!");
+        toast.error("Revocation Transaction rejected!");
       }
     }
   };
@@ -410,382 +353,459 @@ const GenerateCert = () => {
     revokeTxnFailed,
   } = state;
 
-  if (renderLoading) return <div>Connecting...</div>;
-  if (renderMetaMaskError)
+  if (renderLoading) {
     return (
-      <div>
-        You are not using an Ethereum-based browser. Please install MetaMask.
-      </div>
+      <Container
+        maxWidth="md"
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <Box textAlign="center">
+          <CircularProgress size={60} />
+          <Typography variant="h6" sx={{ mt: 3 }}>
+            Connecting to Blockchain...
+          </Typography>
+        </Box>
+      </Container>
     );
-  if (networkError)
-    return <div>Please connect to the correct Ethereum network.</div>;
-  if (isLegitInstitute === false)
-    return <div>You are not authorized to access this page.</div>;
+  }
+
+  if (renderMetaMaskError) {
+    return (
+      <>
+        <NavBar />
+        <Container maxWidth="md" sx={{ mt: 4 }}>
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            <Typography variant="h6">MetaMask Required</Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              You are not using an Ethereum-based browser. Please install
+              MetaMask.
+            </Typography>
+          </Alert>
+          <Button
+            variant="contained"
+            color="primary"
+            href="https://metamask.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            fullWidth
+          >
+            Install MetaMask
+          </Button>
+        </Container>
+      </>
+    );
+  }
+
+  if (networkError) {
+    return (
+      <>
+        <NavBar />
+        <Container maxWidth="md" sx={{ mt: 4 }}>
+          <Alert severity="error" sx={{ mb: 3 }}>
+            <Typography variant="h6">Network Error</Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Please connect to the correct Ethereum network.
+            </Typography>
+          </Alert>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => window.location.reload()}
+            fullWidth
+          >
+            Try Again
+          </Button>
+        </Container>
+      </>
+    );
+  }
+
+  if (isLegitInstitute === false) {
+    return (
+      <>
+        <NavBar />
+        <Container maxWidth="md" sx={{ mt: 4 }}>
+          <Card sx={{ p: 3, textAlign: "center" }}>
+            <Avatar
+              sx={{
+                bgcolor: "error.main",
+                width: 56,
+                height: 56,
+                margin: "0 auto 16px",
+              }}
+            >
+              <ErrorIcon fontSize="large" />
+            </Avatar>
+            <Typography variant="h4" color="error" gutterBottom>
+              Unauthorized Access
+            </Typography>
+            <Typography variant="body1" paragraph>
+              You are not authorized to access this page.
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Only registered institutions can generate certificates.
+            </Typography>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => window.location.reload()}
+            >
+              OK
+            </Button>
+          </Card>
+        </Container>
+      </>
+    );
+  }
 
   return (
     <>
       <NavBar />
-      <Grid
-        container
-        align="center"
-        justifyContent={"center"}
-        alignItems="center"
-      >
-        <Grid item xs={8} sm={8}>
-          <Typography
-            variant="h4"
-            align="center"
+      <Container maxWidth="lg">
+        <GradientText variant="h4">Welcome, Institute</GradientText>
+
+        <FormPaper elevation={3}>
+          <AppBar
+            position="static"
             sx={{
               background:
-                "linear-gradient(124deg, rgb(13, 37, 117) 0%, rgb(21, 192, 155) 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontWeight: "bold",
-              marginTop: "30px",
+                "linear-gradient(124deg, rgb(65, 249, 209) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+              borderRadius: 1,
             }}
           >
-            Welcome, Institute
-          </Typography>
-          <Paper sx={useStyles.paper}>
-            <AppBar position="static" sx={useStyles.appbar}>
-              <StyledTabs
-                value={tabValue}
-                onChange={handleTabChange}
-                aria-label="simple tabs example"
-                variant="fullWidth"
-              >
-                <StyledTab label="Generate Certificate" />
-                <StyledTab label="Revoke Certificate" />
-              </StyledTabs>
-            </AppBar>
-            <div style={useStyles.tabPanel}>
-              {tabValue === 0 && (
-                <form
-                  style={{ ...useStyles.container, marginTop: "3vh" }}
-                  autoComplete="off"
-                  onSubmit={submitData}
-                >
-                  <Grid item xs={12} sm={12}>
-                    <Typography variant="subtitle1">
-                      Input the certificate details below to generate a
-                      certificate
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={12}>
+            <StyledTabs
+              value={tabValue}
+              onChange={handleTabChange}
+              aria-label="certificate tabs"
+              variant="fullWidth"
+            >
+              <StyledTab label="Generate Certificate" />
+              <StyledTab label="Revoke Certificate" />
+            </StyledTabs>
+          </AppBar>
+
+          <Box sx={{ mt: 3 }}>
+            {tabValue === 0 ? (
+              <form onSubmit={submitData}>
+                <Typography variant="subtitle1" paragraph>
+                  Input the certificate details below to generate a certificate
+                </Typography>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
                     <TextField
-                      required
+                      fullWidth
                       disabled
-                      id="institute-name"
                       label="Institute Name"
-                      sx={useStyles.instituteField}
                       value={instituteName}
                       margin="normal"
                       variant="outlined"
                       InputProps={{ readOnly: true }}
                     />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
                     <TextField
-                      required
+                      fullWidth
                       disabled
-                      id="institute-acronym"
                       label="Institute Acronym"
-                      sx={useStyles.instituteField}
                       value={instituteAcronym}
                       margin="normal"
                       variant="outlined"
                       InputProps={{ readOnly: true }}
                     />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
                     <TextField
-                      required
+                      fullWidth
                       disabled
-                      id="institute-website"
                       label="Institute Website"
-                      sx={useStyles.instituteField}
                       value={instituteWebsite}
                       margin="normal"
                       variant="outlined"
                       InputProps={{ readOnly: true }}
                     />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
                     <TextField
-                      required
+                      fullWidth
                       disabled
-                      id="government-id"
                       label="Government ID"
-                      sx={useStyles.instituteField}
                       value={governmentId}
                       margin="normal"
                       variant="outlined"
                       InputProps={{ readOnly: true }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={12}>
+
+                  <Grid item xs={12} md={6}>
                     <TextField
+                      fullWidth
                       required
-                      id="firstname"
                       label="First Name"
-                      sx={useStyles.textField}
                       value={firstname}
                       onChange={handleChange("firstname")}
                       margin="normal"
                       variant="outlined"
                     />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
                     <TextField
+                      fullWidth
                       required
-                      id="lastname"
                       label="Last Name"
-                      sx={useStyles.textField}
                       value={lastname}
                       onChange={handleChange("lastname")}
                       margin="normal"
                       variant="outlined"
                     />
                   </Grid>
-                  <Grid item xs={12} sm={12}>
+
+                  <Grid item xs={12} md={6}>
                     <TextField
+                      fullWidth
                       required
-                      // disabled
-                      id="candidate-Email"
-                      label="candidate Email"
-                      sx={useStyles.instituteField}
+                      label="Candidate Email"
                       value={candidateEmail}
                       onChange={handleChange("candidateEmail")}
                       margin="normal"
                       variant="outlined"
-                      // InputProps={{ readOnly: true }}
                     />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
                     <TextField
+                      fullWidth
                       required
-                      // disabled
-                      id="candidate-Id"
-                      label="candidate Id"
-                      sx={useStyles.instituteField}
+                      label="Candidate ID"
                       value={candidateId}
                       onChange={handleChange("candidateId")}
                       margin="normal"
                       variant="outlined"
-                      // InputProps={{ readOnly: true }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={12}>
-                    <FormControl
-                      required
-                      variant="outlined"
-                      sx={useStyles.formControl}
-                    >
-                      <InputLabel htmlFor="course-index">Course</InputLabel>
+
+                  <Grid item xs={12}>
+                    <FormControl fullWidth margin="normal" required>
+                      <InputLabel>Course</InputLabel>
                       <Select
-                        native
                         value={state.courseIndex}
                         onChange={handleChange("courseIndex")}
-                        label="Courses"
+                        label="Course"
                       >
                         {instituteCourses.map((course, index) => (
-                          <option value={index} key={index}>
+                          <MenuItem value={index} key={index}>
                             {course.course_name}
-                          </option>
+                          </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} sm={12}>
-                    <Box
-                      display="flex"
-                      justifyContent="center"
-                      alignItems="center"
-                    >
-                      <Button
+
+                  <Grid item xs={12}>
+                    <Box display="flex" justifyContent="center">
+                      <SubmitButton
                         type="submit"
-                        // variant="contained"
+                        variant="contained"
                         // color="primary"
-                        // className={`animatedButton ${
-                        //   currentState === "load" ? "load" : ""
-                        // }`}
-                        sx={useStyles.submitBtn}
+                        sx={{
+                          background:
+                            "linear-gradient(124deg, rgb(129, 255, 228) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+                          // color: "white",
+                        }}
                         disabled={currentState === "load"}
-                        // currentState={currentState}
+                        startIcon={
+                          currentState === "load" ? (
+                            <CircularProgress size={24} />
+                          ) : null
+                        }
                       >
-                        {currentState === "load" ? (
-                          <CircularProgress size={24} />
-                        ) : (
-                          "Generate Certificate"
-                        )}
-                      </Button>
-                      {currentState === "validate" && (
-                        <IconButton
-                          style={{ marginTop: "16px" }}
-                          color="primary"
-                          onClick={() => {
-                            setState((prev) => ({
-                              ...prev,
-                              currentState: "normal",
-                              firstname: "",
-                              lastname: "",
-                              courseIndex: 0,
-                            }));
-                          }}
-                        >
-                          <LoopOutlined />
-                        </IconButton>
-                      )}
+                        {currentState === "load"
+                          ? "Generating..."
+                          : "Generate Certificate"}
+                      </SubmitButton>
                     </Box>
+
                     {currentState === "validate" && (
-                      <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                      >
-                        <Typography
-                          variant="caption"
-                          color="inherit"
-                          sx={useStyles.submitBtn}
-                          style={{ marginRight: "10px" }}
+                      <Box mt={2} textAlign="center">
+                        <Alert
+                          icon={<CheckCircle fontSize="inherit" />}
+                          severity="success"
+                          action={
+                            <>
+                              <IconButton
+                                color="inherit"
+                                size="small"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(certificateId);
+                                  toast.success("Copied to clipboard!");
+                                }}
+                              >
+                                <FileCopyOutlined />
+                              </IconButton>
+                              <Button
+                                color="inherit"
+                                size="small"
+                                endIcon={<OpenInNewOutlined />}
+                                onClick={() => {
+                                  window.open(
+                                    `${window.location.href.slice(
+                                      0,
+                                      -window.location.pathname.length
+                                    )}/certificate/${certificateId}`
+                                  );
+                                }}
+                              >
+                                View
+                              </Button>
+                              <IconButton
+                                color="inherit"
+                                size="small"
+                                onClick={() => {
+                                  setState((prev) => ({
+                                    ...prev,
+                                    currentState: "normal",
+                                    firstname: "",
+                                    lastname: "",
+                                    courseIndex: 0,
+                                  }));
+                                }}
+                              >
+                                <LoopOutlined />
+                              </IconButton>
+                            </>
+                          }
                         >
-                          Certificate generated with id {certificateId}
-                        </Typography>
-                        <IconButton
-                          color="primary"
-                          size="small"
-                          onClick={() => {
-                            navigator.clipboard.writeText(certificateId);
-                          }}
-                        >
-                          <FileCopyOutlined />
-                        </IconButton>
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          size="small"
-                          endIcon={<OpenInNewOutlined />}
-                          onClick={() => {
-                            window.open(
-                              `${window.location.href.slice(
-                                0,
-                                -window.location.pathname.length
-                              )}/certificate/${certificateId}`
-                            );
-                          }}
-                        >
-                          Open
-                        </Button>
+                          Certificate generated with ID: {certificateId}
+                        </Alert>
                       </Box>
                     )}
+
                     {txnFailed && (
-                      <div>
-                        Failed to generate certificate, please try again.
-                      </div>
+                      <Box mt={2}>
+                        <Alert severity="error">
+                          Failed to generate certificate, please try again.
+                        </Alert>
+                      </Box>
                     )}
                   </Grid>
-                </form>
-              )}
-              {tabValue === 1 && (
-                <form
-                  style={{ ...useStyles.container, marginTop: "3vh" }}
-                  autoComplete="off"
-                  onSubmit={revokeCertificateFunction}
-                >
-                  <Grid item xs={12} sm={12}>
-                    <Typography variant="subtitle1">
-                      Input the id of the certificate you want to revoke
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={12}>
+                </Grid>
+              </form>
+            ) : (
+              <form onSubmit={revokeCertificateFunction}>
+                <Typography variant="subtitle1" paragraph>
+                  Input the ID of the certificate you want to revoke
+                </Typography>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
                     <TextField
+                      fullWidth
                       required
-                      id="revoke_certificate_id"
                       label="Certificate ID"
-                      sx={useStyles.instituteField}
                       value={revokeCertificateId}
                       onChange={handleChange("revokeCertificateId")}
                       margin="normal"
                       variant="outlined"
                     />
                   </Grid>
-                  <Grid item xs={12} sm={12}>
-                    <Box
-                      display="flex"
-                      justifyContent="center"
-                      alignItems="center"
-                    >
-                      <Button
+
+                  <Grid item xs={12}>
+                    <Box display="flex" justifyContent="center">
+                      <SubmitButton
                         type="submit"
-                        // variant="contained"
+                        variant="contained"
                         // color="primary"
-                        sx={useStyles.submitBtn}
+                        sx={{
+                          background:
+                            "linear-gradient(124deg, rgb(129, 255, 228) 0%, rgb(22, 14, 39) 36%, rgba(125,206,223,1) 100%)",
+                          // color: "white",
+                        }}
                         disabled={revokeCurrentState === "load"}
-                        currentState={revokeCurrentState}
+                        startIcon={
+                          revokeCurrentState === "load" ? (
+                            <CircularProgress size={24} />
+                          ) : null
+                        }
                       >
-                        {revokeCurrentState === "load" ? (
-                          <CircularProgress size={24} />
-                        ) : (
-                          "Revoke Certificate"
-                        )}
-                      </Button>
-                      {revokeCurrentState === "validate" && (
-                        <IconButton
-                          style={{ marginTop: "16px" }}
-                          color="primary"
-                          onClick={() => {
-                            setState((prev) => ({
-                              ...prev,
-                              revokeCurrentState: "normal",
-                              revokeCertificateId: "",
-                            }));
-                          }}
-                        >
-                          <LoopOutlined />
-                        </IconButton>
-                      )}
+                        {revokeCurrentState === "load"
+                          ? "Revoking..."
+                          : "Revoke Certificate"}
+                      </SubmitButton>
                     </Box>
+
                     {revokeCurrentState === "validate" && (
-                      <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center"
-                      >
-                        <Typography
-                          variant="caption"
-                          color="inherit"
-                          sx={useStyles.submitBtn}
-                          style={{ marginRight: "10px" }}
+                      <Box mt={2} textAlign="center">
+                        <Alert
+                          icon={<CheckCircle fontSize="inherit" />}
+                          severity="success"
+                          action={
+                            <>
+                              <IconButton
+                                color="inherit"
+                                size="small"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    revokeCertificateId
+                                  );
+                                  toast.success("Copied to clipboard!");
+                                }}
+                              >
+                                <FileCopyOutlined />
+                              </IconButton>
+                              <Button
+                                color="inherit"
+                                size="small"
+                                endIcon={<OpenInNewOutlined />}
+                                onClick={() => {
+                                  window.open(
+                                    `${window.location.href.slice(
+                                      0,
+                                      -window.location.pathname.length
+                                    )}/certificate/${revokeCertificateId}`
+                                  );
+                                }}
+                              >
+                                View
+                              </Button>
+                              <IconButton
+                                color="inherit"
+                                size="small"
+                                onClick={() => {
+                                  setState((prev) => ({
+                                    ...prev,
+                                    revokeCurrentState: "normal",
+                                    revokeCertificateId: "",
+                                  }));
+                                }}
+                              >
+                                <LoopOutlined />
+                              </IconButton>
+                            </>
+                          }
                         >
-                          Revoked Certificate with id {revokeCertificateId}
-                        </Typography>
-                        <IconButton
-                          color="primary"
-                          size="small"
-                          onClick={() => {
-                            navigator.clipboard.writeText(revokeCertificateId);
-                          }}
-                        >
-                          <FileCopyOutlined />
-                        </IconButton>
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          size="small"
-                          endIcon={<OpenInNewOutlined />}
-                          onClick={() => {
-                            window.open(
-                              `${window.location.href.slice(
-                                0,
-                                -window.location.pathname.length
-                              )}/certificate/${revokeCertificateId}`
-                            );
-                          }}
-                        >
-                          Open
-                        </Button>
+                          Revoked certificate with ID: {revokeCertificateId}
+                        </Alert>
                       </Box>
                     )}
+
                     {revokeTxnFailed && (
-                      <div>Failed to revoke certificate, please try again.</div>
+                      <Box mt={2}>
+                        <Alert severity="error">
+                          Failed to revoke certificate, please try again.
+                        </Alert>
+                      </Box>
                     )}
                   </Grid>
-                </form>
-              )}
-            </div>
-          </Paper>
-        </Grid>
-      </Grid>
+                </Grid>
+              </form>
+            )}
+          </Box>
+        </FormPaper>
+      </Container>
       <ToastContainer
         position="top-center"
         autoClose={5000}
