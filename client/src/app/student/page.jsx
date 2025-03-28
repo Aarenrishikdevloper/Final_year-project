@@ -8,6 +8,51 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import NavBar from "@/components/Navbar";
 import CertificateCard from "@/components/CertificateCard";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Grid,
+  Paper,
+  TextField,
+  Typography,
+  Card,
+  CardContent,
+  Link,
+  Alert,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
+
+const StyledContainer = styled(Container)(({ theme }) => ({
+  paddingTop: theme.spacing(4),
+  paddingBottom: theme.spacing(4),
+}));
+
+const NetworkIndicator = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[100],
+  padding: theme.spacing(1, 2),
+  borderRadius: theme.shape.borderRadius,
+  marginBottom: theme.spacing(2),
+  display: "flex",
+  alignItems: "center",
+}));
+
+const ProfileCard = styled(Card)(({ theme }) => ({
+  marginBottom: theme.spacing(4),
+  padding: theme.spacing(3),
+}));
+
+const CertificatesGrid = styled(Grid)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+}));
+
+const LoadingContainer = styled(Box)({
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  minHeight: "200px",
+});
 
 export default function StudentProfile() {
   const [student, setStudent] = useState(null);
@@ -364,16 +409,22 @@ export default function StudentProfile() {
     }
   };
 
-  // Render loading states
+  // Render loading states with MUI
   if (loading.web3 || loading.contract) {
     return (
       <>
         <NavBar />
-        <div className="container">
-          <h1>Loading</h1>
-          <p>Initializing blockchain connection...</p>
-          <div className="spinner"></div>
-        </div>
+        <StyledContainer>
+          <Typography variant="h4" gutterBottom>
+            Loading
+          </Typography>
+          <Typography paragraph>
+            Initializing blockchain connection...
+          </Typography>
+          <LoadingContainer>
+            <CircularProgress />
+          </LoadingContainer>
+        </StyledContainer>
       </>
     );
   }
@@ -382,20 +433,24 @@ export default function StudentProfile() {
     return (
       <>
         <NavBar />
-        <div className="container">
-          <h1>MetaMask Required</h1>
-          <p>
+        <StyledContainer>
+          <Typography variant="h4" gutterBottom>
+            MetaMask Required
+          </Typography>
+          <Typography paragraph>
             You are not using an Ethereum-based browser. Please install
             MetaMask.
-          </p>
-          <a
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
             href="https://metamask.io/"
             target="_blank"
             rel="noopener noreferrer"
           >
             Install MetaMask
-          </a>
-        </div>
+          </Button>
+        </StyledContainer>
       </>
     );
   }
@@ -404,16 +459,21 @@ export default function StudentProfile() {
     return (
       <>
         <NavBar />
-        <div className="container">
-          <h1>Network Error</h1>
-          <p>Please connect to the correct Ethereum network.</p>
-          <button
+        <StyledContainer>
+          <Typography variant="h4" gutterBottom>
+            Network Error
+          </Typography>
+          <Typography paragraph>
+            Please connect to the correct Ethereum network.
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
             onClick={() => window.location.reload()}
-            className="retry-button"
           >
             Try Again
-          </button>
-        </div>
+          </Button>
+        </StyledContainer>
       </>
     );
   }
@@ -422,16 +482,21 @@ export default function StudentProfile() {
     return (
       <>
         <NavBar />
-        <div className="container error">
-          <h1>Error</h1>
-          <p>{error}</p>
-          <button
+        <StyledContainer>
+          <Typography variant="h4" gutterBottom>
+            Error
+          </Typography>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+          <Button
+            variant="contained"
+            color="primary"
             onClick={() => window.location.reload()}
-            className="retry-button"
           >
             Try Again
-          </button>
-        </div>
+          </Button>
+        </StyledContainer>
       </>
     );
   }
@@ -440,20 +505,25 @@ export default function StudentProfile() {
     return (
       <>
         <NavBar />
-        <div className="container">
-          <h1>Student Profile</h1>
-          <div className="network-indicator">
-            <span>Network: </span>
-            <strong>{networkName}</strong>
-          </div>
-          <button
+        <StyledContainer>
+          <Typography variant="h4" gutterBottom>
+            Student Profile
+          </Typography>
+          <NetworkIndicator>
+            <Typography variant="body1">
+              <strong>Network:</strong> {networkName}
+            </Typography>
+          </NetworkIndicator>
+          <Button
+            variant="contained"
+            color="primary"
             onClick={connectWallet}
             disabled={loading.data}
-            className="connect-button"
+            size="large"
           >
             {loading.data ? "Connecting..." : "Connect Wallet"}
-          </button>
-        </div>
+          </Button>
+        </StyledContainer>
       </>
     );
   }
@@ -461,69 +531,97 @@ export default function StudentProfile() {
   return (
     <>
       <NavBar />
-      <div className="container">
-        <h1>Student Profile</h1>
-        <div className="network-indicator">
-          <span>Network: </span>
-          <strong>{networkName}</strong>
-        </div>
-        <p className="wallet-address">Connected Wallet: {account}</p>
+      <StyledContainer maxWidth="lg">
+        <Typography variant="h4" gutterBottom>
+          Student Profile
+        </Typography>
+
+        <NetworkIndicator>
+          <Typography variant="body1">
+            <strong>Network:</strong> {networkName}
+          </Typography>
+        </NetworkIndicator>
 
         {loading.checkingRegistration ? (
-          <div className="spinner"></div>
+          <LoadingContainer>
+            <CircularProgress />
+          </LoadingContainer>
         ) : student ? (
           <>
-            <div className="profile">
-              <h2>Student Details</h2>
-              <p>
+            <ProfileCard elevation={3}>
+              <Typography variant="h5" gutterBottom>
+                Student Details
+              </Typography>
+              <Typography variant="body1" paragraph>
                 <strong>Wallet Address:</strong> {student.wallet}
-              </p>
-              <p>
+              </Typography>
+              <Typography variant="body1" paragraph>
                 <strong>Email:</strong> {student.email}
-              </p>
-            </div>
+              </Typography>
+            </ProfileCard>
 
-            <div className="certificates-section">
-              <h2>My Certificates</h2>
+            <Box mt={4}>
+              <Typography variant="h5" gutterBottom>
+                My Certificates
+              </Typography>
               {loadingCertificates ? (
-                <div className="spinner"></div>
+                <LoadingContainer>
+                  <CircularProgress />
+                </LoadingContainer>
               ) : certificates.length > 0 ? (
-                <div className="certificates-grid">
+                <CertificatesGrid container spacing={3}>
                   {certificates.map((cert) => (
-                    <CertificateCard
-                      key={cert.id}
-                      certificate={cert}
-                      id={cert.id}
-                    />
+                    <Grid item xs={12} sm={6} md={4} lg={3} key={cert.id}>
+                      <CertificateCard certificate={cert} id={cert.id} />
+                    </Grid>
                   ))}
-                </div>
+                </CertificatesGrid>
               ) : (
-                <p>No certificates found</p>
+                <Typography variant="body1" color="textSecondary">
+                  No certificates found
+                </Typography>
               )}
-            </div>
+            </Box>
           </>
         ) : (
-          <form onSubmit={registerStudent} className="registration-form">
-            <h2>Register as Student</h2>
-            <div className="form-group">
-              <label>Email:</label>
-              <input
+          <Paper elevation={3} sx={{ p: 3, maxWidth: 600, mx: "auto" }}>
+            <Typography variant="h5" gutterBottom>
+              Register as Student
+            </Typography>
+            <Box component="form" onSubmit={registerStudent} sx={{ mt: 2 }}>
+              <TextField
+                fullWidth
+                label="Email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading.registration}
+                margin="normal"
+                variant="outlined"
               />
-            </div>
-            <button
-              type="submit"
-              disabled={loading.registration}
-              className="submit-button"
-            >
-              {loading.registration ? "Registering..." : "Register"}
-            </button>
-          </form>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={loading.registration}
+                size="large"
+                sx={{ mt: 2 }}
+                fullWidth
+              >
+                {loading.registration ? (
+                  <>
+                    <CircularProgress size={24} sx={{ mr: 1 }} />
+                    Registering...
+                  </>
+                ) : (
+                  "Register"
+                )}
+              </Button>
+            </Box>
+          </Paper>
         )}
+
         <ToastContainer
           position="top-center"
           autoClose={5000}
@@ -535,7 +633,7 @@ export default function StudentProfile() {
           draggable
           pauseOnHover
         />
-      </div>
+      </StyledContainer>
     </>
   );
 }
