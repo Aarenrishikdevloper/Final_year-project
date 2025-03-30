@@ -259,6 +259,37 @@ const GenerateCert = () => {
           txnFailed: false,
         }));
         toast.success("Successfully generated certificate!");
+
+        //sending email of successfull certificate generation
+        try {
+          const response = await fetch("/api/send-certificate-email", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              recipient: candidateEmail,
+              candidateName: candidateName,
+              instituteName: instituteName,
+              certificateId: certificateId,
+              certificateLink: `${window.location.href.slice(
+                0,
+                -window.location.pathname.length
+              )}/certificate/${certificateId}`,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to send email");
+          }
+
+          toast.success("Email notification sent to candidate!");
+        } catch (emailError) {
+          console.error("Email sending error:", emailError);
+          toast.warning(
+            "Certificate generated but failed to send email notification"
+          );
+        }
       } else {
         throw new Error("CertificateGenerated event not found.");
       }
