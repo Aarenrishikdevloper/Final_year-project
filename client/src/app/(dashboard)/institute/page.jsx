@@ -329,6 +329,21 @@ const GenerateCert = () => {
     );
 
     try {
+      // First get certificate details using getData
+      const certificateDetails = await certification.methods
+        .getData(revokeCertificateId)
+        .call();
+
+      // Verify we got the expected data structure
+      if (
+        !certificateDetails ||
+        !certificateDetails[1] ||
+        !certificateDetails[0]
+      ) {
+        throw new Error("Invalid certificate data structure");
+      }
+
+      // Then revoke the certificate
       await certification.methods
         .revokeCertificate(revokeCertificateId)
         .send({ from: caller, gas: 2100000 });
@@ -339,6 +354,38 @@ const GenerateCert = () => {
         revokeCurrentState: "validate",
         revokeTxnFailed: false,
       }));
+
+      // Sending revocation email
+      try {
+        const response = await fetch("/api/send-certificate-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            recipient: certificateDetails[1],
+            candidateName: certificateDetails[0],
+            instituteName: state.instituteName,
+            certificateId: revokeCertificateId,
+            certificateLink: `${window.location.href.slice(
+              0,
+              -window.location.pathname.length
+            )}/certificate/${revokeCertificateId}`, // Fixed: using revokeCertificateId instead of certificateId
+            isRevoked: true, // Added flag for revocation email
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to send email");
+        }
+
+        toast.success("Revocation email sent to candidate!");
+      } catch (emailError) {
+        console.error("Email sending error:", emailError);
+        toast.warning(
+          "Certificate revoked but failed to send email notification"
+        );
+      }
     } catch (error) {
       console.error(error);
       setState((prev) => ({
@@ -353,6 +400,12 @@ const GenerateCert = () => {
         );
       } else if (error.code === 4001) {
         toast.error("Revocation Transaction rejected!");
+      } else if (error.message.includes("Invalid certificate data structure")) {
+        toast.error(
+          "Could not retrieve certificate details. Invalid data structure."
+        );
+      } else {
+        toast.error("An unexpected error occurred during revocation");
       }
     }
   };

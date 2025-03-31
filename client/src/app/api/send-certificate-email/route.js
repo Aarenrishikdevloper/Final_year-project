@@ -1,10 +1,9 @@
-// src/app/api/send-certificate-email/route.js
 import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
 
 // Rate limiting configuration
 const rateLimit = new Map();
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_WINDOW = 60 * 1000;
 const RATE_LIMIT_MAX = 5; // Max 5 requests per minute
 
 export async function POST(request) {
@@ -37,6 +36,7 @@ export async function POST(request) {
       instituteName,
       certificateId,
       certificateLink,
+      isRevoked = false,
     } = await request.json();
 
     if (
@@ -67,7 +67,7 @@ export async function POST(request) {
       pool: true,
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD, // Should be an app password without spaces
+        pass: process.env.EMAIL_PASSWORD,
       },
       tls: {
         rejectUnauthorized: true, // Important for production
@@ -78,27 +78,47 @@ export async function POST(request) {
     // Verify connection configuration
     await transporter.verify();
 
+    // Dynamic email content based on revocation status
+    const emailContent = isRevoked
+      ? `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #d32f2f;">Certificate Revoked</h2>
+        <p>Dear ${candidateName},</p>
+        <p>We regret to inform you that your certificate from ${instituteName} has been revoked.</p>
+        <p>Certificate ID: <strong>${certificateId}</strong></p>
+        <p>For more information, please contact the Institute.</p>
+        <p>Best regards,<br/>${instituteName}</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #777;">
+          This is an automated message. Please do not reply directly to this email.
+        </p>
+      </div>
+    `
+      : `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a5276;">Certificate Issued Successfully</h2>
+        <p>Dear ${candidateName},</p>
+        <p>We are pleased to inform you that ${instituteName} has issued your certificate.</p>
+        <p>Certificate ID: <strong>${certificateId}</strong></p>
+        <p>You can view and download your certificate using the following link:</p>
+        <p><a href="${certificateLink}" style="color: #2874a6; text-decoration: none;">View Your Certificate</a></p>
+        <p>If you have any questions, please contact the Institute.</p>
+        <p>Best regards,<br/>${instituteName}</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #777;">
+          This is an automated message. Please do not reply directly to this email.
+        </p>
+      </div>
+    `;
+
     // Send email with improved security headers
     const mailOptions = {
       from: `"${instituteName}" <${process.env.EMAIL_USER}>`,
       to: recipient,
-      subject: `Your Certificate from ${instituteName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #1a5276;">Certificate Issued Successfully</h2>
-          <p>Dear ${candidateName},</p>
-          <p>We are pleased to inform you that ${instituteName} has issued your certificate.</p>
-          <p>Certificate ID: <strong>${certificateId}</strong></p>
-          <p>You can view and download your certificate using the following link:</p>
-          <p><a href="${certificateLink}" style="color: #2874a6; text-decoration: none;">View Your Certificate</a></p>
-          <p>If you have any questions, please contact our support team.</p>
-          <p>Best regards,<br/>${instituteName}</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 12px; color: #777;">
-            This is an automated message. Please do not reply directly to this email.
-          </p>
-        </div>
-      `,
+      subject: isRevoked
+        ? `Certificate Revoked by ${instituteName}`
+        : `Your Certificate from ${instituteName}`,
+      html: emailContent,
       headers: {
         "X-Priority": "1",
         "X-MSMail-Priority": "High",
