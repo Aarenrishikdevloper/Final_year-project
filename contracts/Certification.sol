@@ -23,6 +23,7 @@ contract Certification {
         string course_name,
         string creation_date,
         string institute_Name,
+        string documentUri,
         bool revoked
     );
     event CertificateRevoked(bytes32 certificateId);
@@ -39,11 +40,12 @@ contract Certification {
         string candidate_id;
         string course_name;
         string creation_date;
+        string documentUri;
         // Institute Info
         string institute_name;
         string institute_acronym;
         string institute_link;
-        string governmentId; // New field: Government ID
+        string governmentId;
         // Revocation status
         bool revoked;
     }
@@ -53,7 +55,8 @@ contract Certification {
         string memory _candidate_email,
         string memory _candidate_id,
         uint256 _course_index,
-        string memory _creation_date
+        string memory _creation_date,
+        string memory _documentUri
     ) public {
         require(
             institution.checkInstitutePermission(msg.sender) == true,
@@ -83,7 +86,7 @@ contract Certification {
             string memory _institute_name,
             string memory _institute_acronym,
             string memory _institute_link,
-            string memory _governmentId, // New field: Government ID
+            string memory _governmentId,
             Institution.Course[] memory _institute_courses
         ) = institution.getInstituteData(msg.sender);
 
@@ -92,20 +95,22 @@ contract Certification {
             "Invalid Course index"
         );
 
-        // Store certificate data
-        certificates[certificateId] = Certificate(
-            _candidate_name,
-            _candidate_email,
-            _candidate_id,
-            _institute_courses[_course_index].course_name,
-            _creation_date,
-            _institute_name,
-            _institute_acronym,
-            _institute_link,
-            _governmentId, // Include governmentId
-            false // Not revoked
-        );
-        //new function
+        // Store certificate data - parameters now match the struct definition
+        certificates[certificateId] = Certificate({
+            candidate_name: _candidate_name,
+            candidate_email: _candidate_email,
+            candidate_id: _candidate_id,
+            course_name: _institute_courses[_course_index].course_name,
+            creation_date: _creation_date,
+            documentUri: _documentUri,
+            institute_name: _institute_name,
+            institute_acronym: _institute_acronym,
+            institute_link: _institute_link,
+            governmentId: _governmentId,
+            revoked: false
+        });
+
+        // Add to email mapping
         emailToCertificateIds[_candidate_email].push(certificateId);
 
         emit CertificateGenerated(
@@ -115,11 +120,12 @@ contract Certification {
             _institute_courses[_course_index].course_name,
             _creation_date,
             _institute_name,
+            _documentUri,
             false
         );
     }
 
-    //get certificate by email
+    // Rest of the contract remains unchanged...
     function getCertificatesByEmail(
         string memory _email
     )
@@ -129,6 +135,7 @@ contract Certification {
             bytes32[] memory ids,
             string[] memory courseNames,
             string[] memory issueDates,
+            string[] memory documentUris,
             bool[] memory revokedStatuses
         )
     {
@@ -137,12 +144,14 @@ contract Certification {
 
         courseNames = new string[](count);
         issueDates = new string[](count);
+        documentUris = new string[](count);
         revokedStatuses = new bool[](count);
 
         for (uint256 i = 0; i < count; i++) {
             Certificate storage cert = certificates[ids[i]];
             courseNames[i] = cert.course_name;
             issueDates[i] = cert.creation_date;
+            documentUris[i] = cert.documentUri;
             revokedStatuses[i] = cert.revoked;
         }
     }
@@ -153,6 +162,7 @@ contract Certification {
         string memory _candidate_id,
         uint256 _course_index,
         string memory _creation_date,
+        string memory _documentUri,
         address _issuer
     ) public pure returns (bytes32) {
         return
@@ -163,6 +173,7 @@ contract Certification {
                     _candidate_id,
                     _course_index,
                     _creation_date,
+                    _documentUri,
                     _issuer
                 )
             );
@@ -182,7 +193,8 @@ contract Certification {
             string memory,
             string memory,
             string memory,
-            string memory, // New field: Government ID
+            string memory,
+            string memory,
             bool
         )
     {
@@ -199,20 +211,14 @@ contract Certification {
             temp.candidate_id,
             temp.course_name,
             temp.creation_date,
+            temp.documentUri,
             temp.institute_name,
             temp.institute_acronym,
             temp.institute_link,
-            temp.governmentId, // Return governmentId
+            temp.governmentId,
             temp.revoked
         );
     }
-
-    //getting certificates by email
-    // function getCertificateIdsByEmail(
-    //     string memory _email
-    // ) public view returns (bytes32[] memory) {
-    //     return emailToCertificateIds[_email];
-    // }
 
     function revokeCertificate(bytes32 certificateId) public {
         require(

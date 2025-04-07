@@ -144,18 +144,19 @@ const Page = () => {
 
       console.log("Formatted Date:", formattedDate);
 
-      // Update state with fetched data
+      // Update state with fetched data - documentUri is now last
       setCertificateData({
         candidateName: data[0],
         candidateEmail: data[1],
         candidateId: data[2],
         courseName: data[3],
         creationDate: formattedDate,
-        instituteName: data[5],
-        instituteAcronym: data[6],
-        instituteLink: data[7],
-        instituteGovId: data[8],
-        revoked: data[9],
+        instituteName: data[6],
+        instituteAcronym: data[7],
+        instituteLink: data[8],
+        instituteGovId: data[9],
+        documentUri: data[5], // Moved to last position
+        revoked: data[10],
       });
       setCertExist(true);
     } catch (error) {
@@ -199,7 +200,9 @@ const Page = () => {
           {!loading && !certExist && (
             <Error
               notFound
-              message={"Certificate does not exist"}
+              message={
+                "Certificate does not exist. Try using a Metamask installed browser"
+              }
               buttonText="Okay"
             />
           )}
@@ -215,6 +218,7 @@ const Page = () => {
               instituteAcronym={certificateData.instituteAcronym}
               institutelink={certificateData.instituteLink}
               instituteGovId={certificateData.instituteGovId}
+              documentUri={certificateData.documentUri}
               revoked={certificateData.revoked}
               ref={certicateRef}
             />
@@ -409,6 +413,7 @@ const Certtificate = forwardRef(
       instituteAcronym,
       institutelink,
       instituteGovId,
+      documentUri,
       revoked,
     },
     ref
@@ -493,6 +498,26 @@ const Certtificate = forwardRef(
                       >
                         {id}
                       </span>
+                    }
+                  />
+                </Grid>
+                {/* Add document URI section at the bottom */}
+                <Grid item xs={12}>
+                  <Box m={2} />
+                  <DetailGroup
+                    label={"Document Link"}
+                    content={
+                      <a
+                        href={documentUri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: "#363b98",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        View Original Document
+                      </a>
                     }
                   />
                 </Grid>

@@ -24,6 +24,7 @@
     "react-dom": "^18",
     "react-hot-toast": "^2.5.2",
     "react-toastify": "^11.0.5",
+    "thirdweb": "^5.93.14",
     "uuid": "^11.1.0",
     "web3": "^4.16.0",
     "web3-validator": "^2.0.6"

@@ -36,9 +36,17 @@ import {
   Warning,
   Error as ErrorIcon,
   CheckCircle,
+  AttachFile,
 } from "@mui/icons-material";
 import { encrypt } from "../../../utils/encrypt.js";
 import NavBar from "@/components/Navbar";
+import { createThirdwebClient } from "thirdweb";
+import { upload } from "thirdweb/storage";
+
+//initializing clientID
+const client = createThirdwebClient({
+  clientId: process.env.NEXT_PUBLIC_CLIENT_ID,
+});
 
 // Styled Components
 const StyledTabs = styled(Tabs)(({ theme }) => ({
@@ -107,6 +115,10 @@ const GenerateCert = () => {
     revokeCertificateId: "",
     revokeCurrentState: "normal",
     revokeTxnFailed: false,
+    //adding neccesary states for uploading pdf to IPFS
+    certificateFile: null,
+    ipfsUri: "",
+    isUploading: false,
   });
 
   // Load Web3 and check address
@@ -213,6 +225,60 @@ const GenerateCert = () => {
     }));
   };
 
+  //adding this function to update the state when certificate is added
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.type === "application/pdf") {
+        if (file.size > 20 * 1024 * 1024) {
+          // 20MB limit
+          toast.warning("PDF file size should be less than 20MB");
+          return;
+        }
+        setState((prev) => ({
+          ...prev,
+          certificateFile: file,
+          ipfsUri: "", // Reset URI when new file is selected
+        }));
+      } else {
+        toast.warning("Please upload a valid PDF file");
+      }
+    }
+  };
+
+  //uploading file to IPFS
+  const uploadFile = async () => {
+    if (!state.certificateFile) return;
+
+    setState((prev) => ({ ...prev, isUploading: true }));
+
+    try {
+      const uri = await upload({
+        client,
+        files: [state.certificateFile],
+      });
+
+      //debugging log
+      console.log("URI: ", uri);
+
+      //replacing URI to gateway URI
+      const gatewayUri = `https://ipfs.io/ipfs/${uri.replace("ipfs://", "")}`;
+      //debugging log
+      console.log("Gateway URL: ", gatewayUri);
+
+      setState((prev) => ({
+        ...prev,
+        ipfsUri: gatewayUri,
+        isUploading: false,
+      }));
+      toast.success("PDF uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      setState((prev) => ({ ...prev, isUploading: false }));
+      toast.error("Failed to upload PDF");
+    }
+  };
+
   const submitData = async (event) => {
     event.preventDefault();
     if (state.currentState === "validate") return;
@@ -245,7 +311,8 @@ const GenerateCert = () => {
           candidateEmail,
           candidateId,
           courseIndex,
-          encryptedDate
+          encryptedDate,
+          state.ipfsUri || ""
         )
         .send({ from: caller, gas: 2100000 });
 
@@ -686,6 +753,73 @@ const GenerateCert = () => {
                           </MenuItem>
                         ))}
                       </Select>
+                    </FormControl>
+                  </Grid>
+
+                  {/* Updated PDF Upload Section */}
+                  <Grid item xs={12}>
+                    <FormControl fullWidth margin="normal">
+                      <InputLabel shrink={!!state.certificateFile} sx={{position: 'relative', transform: 'none', marginBottom: 1}}>
+                        Certificate PDF
+                      </InputLabel>
+                      <Box display="flex" alignItems="center" gap={2}>
+                        <input
+                          accept=".pdf"
+                          style={{ display: "none" }}
+                          id="certificate-pdf-upload"
+                          type="file"
+                          onChange={handleFileChange}
+                        />
+                        <label htmlFor="certificate-pdf-upload">
+                          <Button
+                            variant="outlined"
+                            component="span"
+                            startIcon={<AttachFile />}
+                            // sx={{ textTransform: "none", minWidth: 130 }}
+                          >
+                            Choose PDF
+                          </Button>
+                        </label>
+                        {state.certificateFile && (
+                          <Typography variant="body2" noW>
+                            {state.certificateFile.name} (
+                            {Math.round(state.certificateFile.size / 1024)} KB)
+                          </Typography>
+                        )}
+                      </Box>
+                      {state.certificateFile && !state.ipfsUri && (
+                        <Button
+                          // variant="contained"
+                          onClick={uploadFile}
+                          disabled={state.isUploading}
+                          sx={{ mt: 1 }}
+                          startIcon={
+                            state.isUploading ? (
+                              <CircularProgress size={20} />
+                            ) : null
+                          }
+                        >
+                          {state.isUploading ? "Uploading..." : "Upload PDF"}
+                        </Button>
+                      )}
+                      {state.ipfsUri && (
+                        <Box mt={1}>
+                          <Chip
+                            label="PDF Uploaded"
+                            color="success"
+                            variant="outlined"
+                            sx={{ mr: 1 }}
+                          />
+                          <Button
+                            size="small"
+                            href={state.ipfsUri}
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            View Document
+                          </Button>
+                        </Box>
+                      )}
                     </FormControl>
                   </Grid>
 
