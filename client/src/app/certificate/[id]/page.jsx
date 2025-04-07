@@ -129,16 +129,18 @@ const Page = () => {
       console.log(data);
       const encryptionKey = "your-secret-key"; // SAME key used during encryption
       const encryptedDate = data[4];
+      //decrypting data
       const decryptedDate = decrypt(encryptedDate, encryptionKey);
 
       //debugging log
       console.log("Decrypted Date:", decryptedDate);
 
+      //formatting decrypted date
       const timestamp = Number(decryptedDate);
       const date = new Date(timestamp);
-      const formattedDate = `${date.getDate()}-${
+      const formattedDate = `${date.getDate()} / ${
         date.getMonth() + 1
-      }-${date.getFullYear()}`;
+      } / ${date.getFullYear()}`;
 
       console.log("Formatted Date:", formattedDate);
 

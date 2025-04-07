@@ -708,8 +708,8 @@ const GenerateCert = () => {
                         }
                       >
                         {currentState === "load"
-                          ? "Generating..."
-                          : "Generate Certificate"}
+                          ? "Issuing..."
+                          : "Issue Certificate"}
                       </SubmitButton>
                     </Box>
 
