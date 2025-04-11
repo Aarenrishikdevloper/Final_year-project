@@ -689,7 +689,9 @@ const useStyles = makeStyles((theme) => ({
   },
   qrCodeContainer: {
     display: "flex",
-    justifyContent: "center",
+    // justifyContent: "center",
+    flexDirection: "column",
+    alignItems: "center",
     padding: "16px",
     backgroundColor: "#f5f5f5",
     borderRadius: "8px",
@@ -697,9 +699,10 @@ const useStyles = makeStyles((theme) => ({
   },
   qrCodeLabel: {
     textAlign: "center",
-    marginTop: "8px",
-    color: "#666",
+    marginTop: "12px",
+    color: "#333",
     fontSize: "14px",
+    fontWeight: "500",
   },
 }));
 
@@ -791,9 +794,18 @@ const Page = () => {
     if (certificateRef.current) {
       const qrCanvas = certificateRef.current.getQRCodeCanvas();
       if (qrCanvas) {
+        // Create a temporary higher resolution canvas for download
+        const tempCanvas = document.createElement("canvas");
+        const scale = 2; // Double resolution for download
+        tempCanvas.width = qrCanvas.width * scale;
+        tempCanvas.height = qrCanvas.height * scale;
+        const ctx = tempCanvas.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(qrCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
         const link = document.createElement("a");
         link.download = `certificate-qr-${id}.png`;
-        link.href = qrCanvas.toDataURL("image/png");
+        link.href = tempCanvas.toDataURL("image/png");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1047,13 +1059,14 @@ const Certtificate = forwardRef(
           qrCodeRef.current,
           url,
           {
-            width: 150,
-            margin: 1,
+            width: 256,
+            margin: 2,
             errorCorrectionLevel: "H",
             color: {
-              dark: "#2a3f90",
+              dark: "#000000",
               light: "#f8f9fa",
             },
+            scale: 4, //higher scale for better quality
           },
           (error) => {
             if (error) console.error("QR code generation error:", error);
