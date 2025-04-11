@@ -24,6 +24,7 @@ import { forwardRef } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import Web3 from "web3";
+import QRCode from "qrcode";
 import Certification from "../../../../../build/contracts/Certification.json";
 import { decrypt } from "@/utils/decrypt";
 
@@ -85,6 +86,20 @@ const useStyles = makeStyles((theme) => ({
         ? "linear-gradient(129deg, rgba(221,126,173,1) 0%, rgba(221,126,126,1) 75%)"
         : "linear-gradient(124deg, rgba(126,170,221,1) 0%, rgba(126,215,221,1) 76%)",
     color: "white",
+  },
+  qrCodeContainer: {
+    display: "flex",
+    justifyContent: "center",
+    padding: "16px",
+    backgroundColor: "#f5f5f5",
+    borderRadius: "8px",
+    marginTop: "16px",
+  },
+  qrCodeLabel: {
+    textAlign: "center",
+    marginTop: "8px",
+    color: "#666",
+    fontSize: "14px",
   },
 }));
 
@@ -368,8 +383,6 @@ const VerificationStatus = (props) => {
               {props.revoked ? "Revoked" : "Verified"}
             </Box>
             <a
-              // href="javascript:void(0)"
-              // style={{ color: "white", fontSize: "12px" }}
               href="#"
               onClick={(e) => e.preventDefault()}
               style={{ color: "white", fontSize: "12px" }}
@@ -419,6 +432,35 @@ const Certtificate = forwardRef(
     ref
   ) => {
     const classes = useStyles({ revoked });
+    const qrCodeRef = useRef(null);
+    const [verificationUrl, setVerificationUrl] = useState("");
+
+    useEffect(() => {
+      // Set the verification URL
+      const currentUrl = window.location.origin;
+      const url = `${currentUrl}/verify/${id}`;
+      setVerificationUrl(url);
+
+      // Generate QR code
+      if (qrCodeRef.current) {
+        QRCode.toCanvas(
+          qrCodeRef.current,
+          url,
+          {
+            width: 150,
+            margin: 1,
+            errorCorrectionLevel: "H",
+            color: {
+              dark: "#2a3f90",
+              light: "#f8f9fa",
+            },
+          },
+          (error) => {
+            if (error) console.error("QR code generation error:", error);
+          }
+        );
+      }
+    }, [id]);
 
     return (
       <>
@@ -501,7 +543,7 @@ const Certtificate = forwardRef(
                     }
                   />
                 </Grid>
-                {/* Add document URI section at the bottom */}
+                {/* Add document URI section */}
                 <Grid item xs={12}>
                   <Box m={2} />
                   <DetailGroup
@@ -518,6 +560,30 @@ const Certtificate = forwardRef(
                       >
                         View Original Document
                       </a>
+                    }
+                  />
+                </Grid>
+                {/* Add QR Code section */}
+                <Grid item xs={12}>
+                  <Box m={2} />
+                  <DetailGroup
+                    label={"Verification QR Code"}
+                    content={
+                      <Box className={classes.qrCodeContainer}>
+                        <Box
+                          display="flex"
+                          flexDirection="column"
+                          alignItems="center"
+                        >
+                          <canvas ref={qrCodeRef} />
+                          <Typography
+                            variant="caption"
+                            className={classes.qrCodeLabel}
+                          >
+                            Scan to verify certificate status
+                          </Typography>
+                        </Box>
+                      </Box>
                     }
                   />
                 </Grid>

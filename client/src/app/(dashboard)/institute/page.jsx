@@ -897,7 +897,7 @@ const GenerateCert = () => {
                             </>
                           }
                         >
-                          Certificate generated with ID: {certificateId}
+                          Certificate issued with ID: {certificateId}
                         </Alert>
                       </Box>
                     )}
