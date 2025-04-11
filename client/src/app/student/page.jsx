@@ -592,7 +592,7 @@ export default function StudentProfile() {
               ) : certificates.length > 0 ? (
                 <CertificatesGrid container spacing={3}>
                   {certificates.map((cert) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={cert.id}>
+                    <Grid item xs={12} sm={6} key={cert.id}>
                       <CertificateCard certificate={cert} id={cert.id} />
                     </Grid>
                   ))}
