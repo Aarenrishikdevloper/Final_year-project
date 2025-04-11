@@ -246,11 +246,11 @@ export default function StudentProfile() {
               candidate_id: fullData[2] || "Not available",
               course_name: fullData[3] || "Not available",
               creation_date: fullData[4] || "Not available",
-              institute_name: fullData[5] || "Not available",
-              institute_acronym: fullData[6] || "Not available",
-              institute_link: fullData[7] || "Not available",
-              governmentId: fullData[8] || "Not available",
-              revoked: fullData[9] || false,
+              institute_name: fullData[6] || "Not available",
+              institute_acronym: fullData[7] || "Not available",
+              institute_link: fullData[8] || "Not available",
+              governmentId: fullData[9] || "Not available",
+              revoked: fullData[10] || false,
             };
           } catch (e) {
             console.error(`Error fetching certificate ${id}:`, e);
@@ -307,11 +307,11 @@ export default function StudentProfile() {
               candidate_id: data[2] || "Not available",
               course_name: data[3] || "Not available",
               creation_date: data[4] || "Not available",
-              institute_name: data[5] || "Not available",
-              institute_acronym: data[6] || "Not available",
-              institute_link: data[7] || "Not available",
-              governmentId: data[8] || "Not available",
-              revoked: data[9] || false,
+              institute_name: data[6] || "Not available",
+              institute_acronym: data[7] || "Not available",
+              institute_link: data[8] || "Not available",
+              governmentId: data[9] || "Not available",
+              revoked: data[10] || false,
             };
           } catch (e) {
             console.error("Error processing event:", e);
