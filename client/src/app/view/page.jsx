@@ -35,7 +35,7 @@ const Page = () => {
             letterSpacing: "1px",
           }}
         >
-          Welcome, Employee
+          Welcome,
         </Typography>
 
         <Box display="flex" justifyContent="center" alignItems="center">
